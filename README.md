@@ -103,7 +103,7 @@ L'invio delle richieste di preventivo non avviene più via `mailto:`, ma tramite
 
 Il sito statico viene pubblicato automaticamente su **GitHub Pages** ad ogni push sul branch `main`. Le function in `api/` vengono invece eseguite da **Vercel** come Serverless Functions, con `RESEND_API_KEY` configurata nelle impostazioni del progetto Vercel.
 
-**URL di produzione:** [https://lindsey-brock.github.io/nrg-energia/](https://lindsey-brock.github.io/nrg-energia/)
+**URL di produzione:** https://github.com/nrg-energia/pagina-aziendale
 
 ### Flusso di deploy
 
