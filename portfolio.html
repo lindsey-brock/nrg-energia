@@ -639,12 +639,11 @@
   .pmodal-zoom-btn { position:absolute; top:52px; right:12px; background:rgba(255,255,255,0.88); border:none; border-radius:50%; width:34px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:3; box-shadow:0 2px 8px rgba(0,0,0,0.18); transition:background 0.15s; }
   .pmodal-zoom-btn:hover { background:#fff; }
   .pmodal-zoom-btn svg { width:16px; height:16px; }
-  .pmodal-img-wrap.video-active .pmodal-zoom-btn { display:none; }
 
   /* Fullscreen lightbox */
   .lightbox-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center; cursor:zoom-out; }
   .lightbox-overlay.open { display:flex; }
-  .lightbox-overlay img { max-width:92vw; max-height:92vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 48px rgba(0,0,0,0.6); cursor:default; }
+  .lightbox-overlay img, .lightbox-overlay video { max-width:92vw; max-height:92vh; object-fit:contain; border-radius:6px; box-shadow:0 8px 48px rgba(0,0,0,0.6); cursor:default; }
   .lightbox-close { position:absolute; top:16px; right:20px; background:rgba(255,255,255,0.12); border:none; border-radius:50%; width:40px; height:40px; font-size:22px; color:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
   .lightbox-close:hover { background:rgba(255,255,255,0.25); }
 </style>
@@ -684,6 +683,7 @@
 <div id="lightbox-overlay" class="lightbox-overlay" role="dialog" aria-modal="true">
   <button class="lightbox-close" id="lightbox-close" aria-label="Chiudi">&#x2715;</button>
   <img id="lightbox-img" src="" alt="">
+  <video id="lightbox-video" playsinline controls></video>
 </div>
 
 <script>
@@ -788,18 +788,31 @@
 (function(){
   var lb      = document.getElementById('lightbox-overlay');
   var lbImg   = document.getElementById('lightbox-img');
+  var lbVideo = document.getElementById('lightbox-video');
   var lbClose = document.getElementById('lightbox-close');
   var zoomBtn = document.getElementById('pmodal-zoom-btn');
   var pImg    = document.querySelector('.pmodal-img');
+  var pVideo  = document.querySelector('.pmodal-video');
 
   function openLightbox() {
-    lbImg.src = pImg.src;
+    if (pVideo.classList.contains('pmodal-media-active')) {
+      lbImg.style.display = 'none';
+      lbVideo.style.display = 'block';
+      lbVideo.src = pVideo.src;
+      lbVideo.muted = pVideo.muted;
+      lbVideo.play();
+    } else {
+      lbVideo.style.display = 'none';
+      lbImg.style.display = 'block';
+      lbImg.src = pImg.src;
+    }
     lb.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
   function closeLightbox() {
     lb.classList.remove('open');
     document.body.style.overflow = '';
+    lbVideo.pause();
   }
 
   zoomBtn.addEventListener('click', openLightbox);
