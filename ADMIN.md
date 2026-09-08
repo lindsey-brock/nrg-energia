@@ -229,8 +229,9 @@ a title and the card changes with it.
 
 - **Blog posts** — the post's own image, darkened, with its title and meta
   description overlaid
-- **Homepage and pages without a photo** — a brand card: wordmark, tagline and
-  office hours, in the language being shared
+- **Homepage, blog index and pages without a photo** — a brand card rendered by
+  `npm run og:cards`: the real dot-grid mark, the Syne wordmark, tagline and
+  office hours, in the language being shared. Committed to `og/*.jpg`
 - **Section pages** — that page's hero photo with the section name
 
 Two encoding rules the hard way: `l_one_pixel` is not an asset in this account
@@ -238,6 +239,11 @@ so a scrim layer 400s — `e_colorize` is used instead; and commas must be
 double-encoded as `%252C`, since `encodeURIComponent` yields `%2C` and
 Cloudinary decodes the path once more before parsing transformations.
 
-The logo mark itself is not on the brand card: it is an SVG in the repo, not a
-Cloudinary asset, and uploading it needs API credentials. Once it is uploaded,
-adding it is one extra layer in `brandCard()`.
+Brand cards are rendered by headless Chrome from an HTML template
+(`scripts/make-og-cards.mjs`), then converted to JPEG — about 70KB each, against
+400KB as PNG. That is why they carry the real logo and Syne: Cloudinary can only
+set type in fonts it hosts, which meant Arial.
+
+Blog post cards stay on Cloudinary because they must be composed at publish time
+from whatever title the editor typed, and Chrome is not available there. Re-run
+`npm run og:cards` after changing a tagline or the office hours.

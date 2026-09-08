@@ -43,9 +43,15 @@ export function photoCard(publicId, title, subtitle = '') {
 }
 
 /**
- * A brand card for pages with no photograph: NRG green, the wordmark, a tagline
- * and the office hours, in whichever language is being shared.
+ * Brand cards are pre-rendered to og/*.jpg by scripts/make-og-cards.mjs, using
+ * headless Chrome so they carry the real dot-grid mark and the Syne wordmark.
+ * Cloudinary can only set type in fonts it hosts, which meant Arial.
  */
+export function brandAsset(name) {
+  return `${SITE}/og/${name}.jpg`;
+}
+
+/** Cloudinary-composed fallback, kept for reference. Not used by the page map. */
 export function brandCard(lang, tagline) {
   const hours = lang === 'it'
     ? 'Lun–Ven 8:30–12:30 · 14:30–18:30 · Imola (BO)'
@@ -77,13 +83,13 @@ export const PAGES = [
       file: 'index.html', url: '/index',
       title: 'NRG Energia — Energie Rinnovabili e Ambiente',
       description: 'Progettazione e installazione di impianti fotovoltaici, coperture e bonifica amianto in Emilia-Romagna. Gestiamo l’intero processo internamente.',
-      og: () => brandCard('it', TAGLINE.it),
+      og: () => brandAsset('home-it'),
     },
     en: {
       file: 'index.html', url: '/index?lang=en',
       title: 'NRG Energia — Renewable Energy & Environment',
       description: 'Design and installation of solar systems, roofing and asbestos removal in Emilia-Romagna, Italy. The whole process handled in house.',
-      og: () => brandCard('en', TAGLINE.en),
+      og: () => brandAsset('home-en'),
     },
     sharedFile: true,   // one file serves both languages via the JS toggle
   },
@@ -122,10 +128,10 @@ export const PAGES = [
   {
     it: { file: 'services/impianti-elettrici.html', url: '/services/impianti-elettrici', title: 'Impianti elettrici — NRG Energia',
       description: 'Impianti elettrici civili e industriali: progettazione, installazione e messa a norma.',
-      og: () => brandCard('it', 'Impianti elettrici civili e industriali') },
+      og: () => brandAsset('elettrici-it') },
     en: { file: 'services/en/electrical-systems.html', url: '/services/en/electrical-systems', title: 'Electrical systems — NRG Energia',
       description: 'Residential and industrial electrical systems: design, installation and compliance.',
-      og: () => brandCard('en', 'Residential and industrial electrical systems') },
+      og: () => brandAsset('elettrici-en') },
   },
 ];
 

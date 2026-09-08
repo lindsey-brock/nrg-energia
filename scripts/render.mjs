@@ -1,5 +1,5 @@
 // Renders the blog HTML from content/posts.json.
-import { metaBlock, photoCard, brandCard } from './seo-meta.mjs';
+import { metaBlock, photoCard, brandAsset } from './seo-meta.mjs';
 // Used by scripts/build.mjs (CLI) and api/admin/publish.js (admin dashboard).
 
 const CLOUD = (typeof process !== 'undefined' && process.env?.CLOUDINARY_CLOUD_NAME) || 'dmegrbq5k';
@@ -69,7 +69,7 @@ function indexSeo(lang) {
   return metaBlock({
     lang, self, alt: { it: '/blog', en: '/services/en/blog' },
     title: copy.title, description: copy.description,
-    ogImage: brandCard(lang, copy.tagline),
+    ogImage: brandAsset(lang === 'it' ? 'blog-it' : 'blog-en'),
   });
 }
 

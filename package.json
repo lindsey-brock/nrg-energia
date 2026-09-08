@@ -14,6 +14,7 @@
     "cloudinary:copy": "node scripts/migrate-cloudinary.mjs --copy",
     "cloudinary:rewrite": "node scripts/migrate-cloudinary.mjs --rewrite",
     "seo:meta": "node scripts/add-seo-meta.mjs",
-    "seo:check": "node scripts/add-seo-meta.mjs --check"
+    "seo:check": "node scripts/add-seo-meta.mjs --check",
+    "og:cards": "node scripts/make-og-cards.mjs"
   }
 }
