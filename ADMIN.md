@@ -102,7 +102,13 @@ saving.
 
 ## SEO
 
-Every post in the Blog list carries its own score chips (IT and EN) with an
+Inside the editor, a **Controlli SEO** panel sits above the canvas. It shows the
+score for each language and expands to list every issue with a concrete fix —
+how many characters to add, what to write, which slug to use. It recalculates
+about a second after you stop typing, against the unsaved draft, so the score
+moves while you write rather than after you publish.
+
+Every post in the Blog list also carries score chips (IT and EN) with an
 expandable panel listing what to fix. It recalculates on every load, so a new
 post is audited the moment it is created — there is nothing to run, and no LLM
 involved: the checks are deterministic rules over the content (character counts,

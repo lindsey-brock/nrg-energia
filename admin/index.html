@@ -99,6 +99,8 @@
     .acc-summary { margin-left:auto; color:var(--text-light); font-size:12.5px; }
     .acc-panel { display:none; padding-top:4px; }
     .acc-panel.open { display:block; }
+    .seo-bar { padding:16px 20px; }
+    .issue-fix { color:var(--text-light); font-size:12.5px; line-height:1.6; margin-top:3px; }
     .issue { font-size:13px; padding:5px 0 5px 20px; position:relative; color:var(--text-mid); }
     .issue::before { content:''; position:absolute; left:5px; top:12px; width:6px; height:6px; border-radius:50%; }
     .issue.error::before { background:var(--red); }
@@ -508,6 +510,7 @@ function openPostEditor(post, { isNew = false } = {}) {
   const langSwitch = el('div', { class: 'lang-switch' });
   const msg = el('div', { class: 'msg' });
   const canvasHost = el('div');
+  const seoBar = el('div', { class: 'card seo-bar' });
 
   header(work,
     esc(draft.it.title.replace(/&mdash;/g, '—')),
@@ -516,7 +519,66 @@ function openPostEditor(post, { isNew = false } = {}) {
       langSwitch,
       el('button', { class: 'btn btn-ghost btn-sm', onclick: () => { if (confirmLeave()) render(); } }, ['← Tutti gli articoli']),
     ]));
-  work.append(msg, canvasHost);
+  work.append(msg, seoBar, canvasHost);
+
+  // ── live SEO panel ────────────────────────────────────────────────────────
+  let seoOpen = false;
+  let seoTimer = null;
+
+  async function refreshSeo() {
+    try {
+      const { reports } = await api('seo', {
+        method: 'POST',
+        body: { post: draft, allPosts: postsDoc?.posts || [] },
+      });
+      paintSeo(reports);
+    } catch {
+      seoBar.innerHTML = '';   // never let the audit block editing
+    }
+  }
+  const queueSeo = () => { clearTimeout(seoTimer); seoTimer = setTimeout(refreshSeo, 700); };
+
+  function paintSeo(reports) {
+    seoBar.innerHTML = '';
+    const total = reports.reduce((n, r) => n + r.errors + r.warns, 0);
+    const chips = reports.map((r) =>
+      `<span class="score sm ${scoreClass(r.score)}">${r.lang.toUpperCase()} ${r.score}</span>`).join(' ');
+
+    const panel = el('div', { class: `acc-panel${seoOpen ? ' open' : ''}` });
+    const toggle = el('button', {
+      class: 'acc-toggle', style: 'margin-top:0;border-top:none;padding-top:0',
+      onclick: () => {
+        seoOpen = !seoOpen;
+        panel.classList.toggle('open', seoOpen);
+        toggle.querySelector('.acc-caret').textContent = seoOpen ? '▾' : '▸';
+      },
+    }, [
+      el('span', { class: 'acc-caret' }, [seoOpen ? '▾' : '▸']),
+      el('span', { class: 'aside-label', style: 'margin:0' }, ['Controlli SEO']),
+      el('span', { html: chips }),
+      el('span', { class: 'acc-summary', html:
+        total ? `${total} ${total === 1 ? 'suggerimento' : 'suggerimenti'}` : 'tutto a posto' }),
+    ]);
+
+    for (const r of reports) {
+      const group = el('div', { style: 'margin-top:12px' });
+      group.append(el('div', { class: 'aside-label', html:
+        `${r.lang === 'it' ? 'Italiano' : 'English'} — ${r.words} parole · titolo ${r.titleLength} · description ${r.descLength}` }));
+      if (!r.issues.length) {
+        group.append(el('div', { class: 'issue', style: 'padding-left:14px', html: 'Nessun problema rilevato.' }));
+      }
+      for (const i of r.issues) {
+        group.append(el('div', { class: `issue ${i.level}` }, [
+          el('div', { html: `<strong>${esc(i.message)}</strong>` }),
+          i.fix ? el('div', { class: 'issue-fix', html: esc(i.fix) }) : null,
+        ]));
+      }
+      panel.append(group);
+    }
+    seoBar.append(toggle, panel);
+  }
+
+  refreshSeo();
 
   const confirmLeave = () => !dirty || confirm('Ci sono modifiche non salvate. Uscire comunque?');
 
@@ -524,7 +586,7 @@ function openPostEditor(post, { isNew = false } = {}) {
     canvasHost.innerHTML = '';
     const { el: canvasEl } = createCanvas({
       lang, langData: draft[lang], post: draft,
-      onDirty: () => { dirty = true; saveBtn.disabled = false; },
+      onDirty: () => { dirty = true; saveBtn.disabled = false; queueSeo(); },
       uploadImage,
     });
     canvasHost.append(canvasEl);
@@ -546,11 +608,11 @@ function openPostEditor(post, { isNew = false } = {}) {
   const metaCols = el('div', { class: 'lang-cols', style: 'margin-top:14px' });
   for (const code of ['it', 'en']) {
     const col = el('div', { class: 'lang-col' }, [el('h4', { html: code === 'it' ? 'Italiano' : 'English' })]);
-    col.append(field('Titolo', draft[code].title, (v) => { draft[code].title = v; dirty = true; }));
-    col.append(field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; }));
-    col.append(field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; }, 'textarea'));
-    col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; }, 'textarea'));
-    col.append(field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; }));
+    col.append(field('Titolo', draft[code].title, (v) => { draft[code].title = v; dirty = true; queueSeo(); }));
+    col.append(field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; queueSeo(); }));
+    col.append(field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; queueSeo(); }, 'textarea'));
+    col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; queueSeo(); }, 'textarea'));
+    col.append(field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; queueSeo(); }));
     col.append(field('Data', draft[code].dateLabel, (v) => { draft[code].dateLabel = v; dirty = true; }));
     col.append(field('Riferimenti normativi (testo | link | coda)',
       draft.references?.[code] ?? '', (v) => {
