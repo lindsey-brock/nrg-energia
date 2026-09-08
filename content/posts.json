@@ -1,0 +1,314 @@
+{
+  "posts": [
+    {
+      "id": "bonus-casa-2026",
+      "published": true,
+      "date": "2026-09-03",
+      "readMinutes": 3,
+      "category": "fotovoltaico",
+      "image": "v1788802289/watt-a-lot-Ja8t8nJN2I4-unsplash_hvypdi.jpg",
+      "imageCaption": "",
+      "inlineImage": "v1780915268/1_FOTO_Impianto_fotovoltaico_residenziale_integrato_realizzato_a_Dozza._uqfbcl.jpg",
+      "service": "energie-rinnovabili",
+      "references": {
+        "url": "https://www.agenziaentrate.gov.it/portale/introduzione-ristrutturazioni-edilizie-le-agevolazioni-fiscali",
+        "it": "Legge di Bilancio 2026",
+        "en": "2026 Budget Law"
+      },
+      "it": {
+        "slug": "bonus-casa-2026",
+        "tag": "Fotovoltaico",
+        "dateLabel": "3 settembre 2026",
+        "readLabel": "3 min di lettura",
+        "title": "Bonus Casa 2026 &mdash; Legge di Bilancio 2026",
+        "excerpt": "La Legge di Bilancio 2026 conferma le aliquote del 2025: detrazione al 50% per l&rsquo;abitazione principale e al 36% in tutti gli altri casi.",
+        "metaDescription": "Bonus Casa 2026: la Legge di Bilancio conferma bonus ristrutturazione, ecobonus e sismabonus con detrazione al 50% e al 36%.",
+        "imageAlt": "Impianto fotovoltaico residenziale integrato su copertura",
+        "inlineAlt": "Impianto fotovoltaico residenziale integrato a Dozza",
+        "inlineCaption": "Impianto fotovoltaico residenziale integrato, Dozza.",
+        "lead": "La Legge di Bilancio 2026 ha confermato i principali bonus edilizi, mantenendo le stesse aliquote del 2025.",
+        "sections": [
+          {
+            "id": "aliquote",
+            "heading": "Due aliquote, come nel 2025",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "Anche per il 2026, <strong>bonus ristrutturazione, ecobonus e sismabonus</strong> funzioneranno con una detrazione a due livelli: 50% per le abitazioni principali e 36% in tutti gli altri casi."
+              },
+              {
+                "type": "rates",
+                "items": [
+                  {
+                    "value": "50%",
+                    "label": "Detrazione per le <strong>abitazioni principali</strong>"
+                  },
+                  {
+                    "value": "36%",
+                    "label": "Detrazione in <strong>tutti gli altri casi</strong>",
+                    "variant": "alt"
+                  }
+                ]
+              },
+              {
+                "type": "figure",
+                "position": "inline"
+              }
+            ]
+          },
+          {
+            "id": "quando",
+            "heading": "Perch&eacute; conviene programmare i lavori nel 2026",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "Il 2026 rimane un anno favorevole per chi vuole installare un <strong>impianto fotovoltaico con sistema di accumulo</strong>."
+              },
+              {
+                "type": "quote",
+                "html": "Programmare i lavori quest&rsquo;anno significa sfruttare le condizioni migliori prima del prossimo ridimensionamento delle aliquote previsto per il 2027."
+              }
+            ]
+          }
+        ]
+      },
+      "en": {
+        "slug": "home-bonus-2026",
+        "tag": "Solar Power",
+        "dateLabel": "3 September 2026",
+        "readLabel": "3 min read",
+        "title": "Home Bonus 2026 &mdash; the 2026 Budget Law",
+        "excerpt": "The 2026 Budget Law confirms the 2025 rates: a 50% deduction for main homes and 36% in all other cases.",
+        "metaDescription": "Home Bonus 2026: the Budget Law confirms the renovation bonus, ecobonus and sismabonus with deductions of 50% and 36%.",
+        "imageAlt": "Integrated residential solar system on a roof",
+        "inlineAlt": "Integrated residential solar system in Dozza",
+        "inlineCaption": "Integrated residential solar system, Dozza.",
+        "lead": "The 2026 Budget Law has confirmed the main building bonuses, keeping the same rates as 2025.",
+        "sections": [
+          {
+            "id": "aliquote",
+            "heading": "Two rates, just like 2025",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "In 2026 as well, the <strong>renovation bonus, ecobonus and sismabonus</strong> will work with a two-tier deduction: 50% for main homes and 36% in all other cases."
+              },
+              {
+                "type": "rates",
+                "items": [
+                  {
+                    "value": "50%",
+                    "label": "Deduction for <strong>main homes</strong>"
+                  },
+                  {
+                    "value": "36%",
+                    "label": "Deduction in <strong>all other cases</strong>",
+                    "variant": "alt"
+                  }
+                ]
+              },
+              {
+                "type": "figure",
+                "position": "inline"
+              }
+            ]
+          },
+          {
+            "id": "quando",
+            "heading": "Why it pays to plan the work in 2026",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "2026 remains a favourable year for anyone looking to install a <strong>solar system with battery storage</strong>."
+              },
+              {
+                "type": "quote",
+                "html": "Planning the work this year means taking advantage of the best conditions before the next reduction in rates, expected in 2027."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sicurezza-in-quota",
+      "published": true,
+      "date": "2026-08-28",
+      "readMinutes": 3,
+      "category": "coperture",
+      "image": "v1788802976/raze-solar-pIcseKMisrs-unsplash_mbpchy.jpg",
+      "imageCaption": "",
+      "inlineImage": "v1780920646/IMG_9324_alx5ux.jpg",
+      "service": "coperture",
+      "references": {
+        "url": "https://territorio.regione.emilia-romagna.it/codice-territorio/disciplina-regionale/sicurezza-cantieri/pdf/dgr_699-2015",
+        "it": "D.Lgs. 81/2008|DGR 699/2015|(Emilia-Romagna)",
+        "en": "Legislative Decree 81/2008|DGR 699/2015|(Emilia-Romagna)"
+      },
+      "it": {
+        "slug": "sicurezza-in-quota",
+        "tag": "Coperture",
+        "dateLabel": "28 agosto 2026",
+        "readLabel": "3 min di lettura",
+        "title": "Sicurezza in quota",
+        "excerpt": "Linea vita e punti di ancoraggio possono essere coordinati con il nuovo impianto fotovoltaico, ragionando sull&rsquo;intera copertura in un&rsquo;unica soluzione.",
+        "metaDescription": "Sicurezza in quota: cosa prevede la normativa e perché conviene prevedere linea vita e punti di ancoraggio insieme all'impianto fotovoltaico.",
+        "imageAlt": "Installatori con imbracatura di sicurezza durante la posa di un pannello fotovoltaico in copertura",
+        "inlineAlt": "Copertura industriale metallica a Massa Lombarda",
+        "inlineCaption": "Copertura industriale, Massa Lombarda.",
+        "lead": "Per &laquo;sicurezza in quota&raquo; si intendono tutte le misure che proteggono chi lavora su una copertura dal rischio di caduta dall&rsquo;alto: linee vita, punti di ancoraggio, parapetti e percorsi di accesso sicuri. In Italia sono richieste dalla normativa (D.Lgs. 81/2008 e regolamenti regionali, in Emilia-Romagna la DGR 699/2015) per qualsiasi intervento su un tetto, non solo per la posa iniziale.",
+        "sections": [
+          {
+            "id": "perche",
+            "heading": "Perch&eacute; &egrave; importante",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "Un impianto fotovoltaico non finisce con l&rsquo;installazione. Nel corso della sua vita serviranno pulizia dei moduli, controlli sugli inverter e sui cablaggi, sostituzioni, verifiche dopo eventi atmosferici."
+              },
+              {
+                "type": "quote",
+                "html": "Ogni salita in copertura &egrave; un&rsquo;esposizione al rischio: la caduta dall&rsquo;alto resta la prima causa di infortunio grave nei cantieri edili."
+              },
+              {
+                "type": "p",
+                "html": "Prevedere fin da subito dispositivi permanenti significa rendere sicuri <strong>tutti gli accessi futuri</strong>, non solo il primo, e mettere il committente in regola verso chi dovr&agrave; intervenire."
+              },
+              {
+                "type": "figure",
+                "position": "inline"
+              }
+            ]
+          },
+          {
+            "id": "copertura",
+            "heading": "Un&rsquo;unica lettura della copertura",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "Quando l&rsquo;installazione del fotovoltaico viene coordinata con quella dei sistemi anticaduta, si pu&ograve; ragionare sull&rsquo;intera copertura in modo ordinato ed evitare interventi separati che creerebbero interferenze tra:"
+              },
+              {
+                "type": "icons",
+                "items": [
+                  {
+                    "icon": "panel",
+                    "label": "Pannelli"
+                  },
+                  {
+                    "icon": "fixing",
+                    "label": "Fissaggi"
+                  },
+                  {
+                    "icon": "route",
+                    "label": "Passaggi tecnici"
+                  },
+                  {
+                    "icon": "shield",
+                    "label": "Dispositivi di sicurezza"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "html": "Il risultato &egrave; una copertura in cui i <strong>percorsi di accesso ai moduli sono gi&agrave; protetti</strong>, gli ancoraggi non ostacolano i pannelli e le forature sul manto sono ridotte al minimo."
+              }
+            ]
+          },
+          {
+            "id": "progetto",
+            "heading": "Ogni tetto fa storia a s&eacute;",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "La soluzione corretta dipende sempre dal <strong>progetto</strong>, dalla <strong>struttura del tetto</strong> e dalle <strong>indicazioni del tecnico abilitato</strong>, che valuta materiali, pendenze, punti di accesso e destinazione d&rsquo;uso dell&rsquo;edificio."
+              }
+            ]
+          }
+        ]
+      },
+      "en": {
+        "slug": "working-at-height-safety",
+        "tag": "Roofing",
+        "dateLabel": "28 August 2026",
+        "readLabel": "3 min read",
+        "title": "Working at height safely",
+        "excerpt": "Lifelines and anchor points can be coordinated with a new solar installation, treating the whole roof as a single job.",
+        "metaDescription": "Working at height safely: what the regulations require, and why it pays to plan lifelines and anchor points together with the solar system.",
+        "imageAlt": "Installers wearing safety harnesses fitting a solar panel on a roof",
+        "inlineAlt": "Industrial metal roof in Massa Lombarda",
+        "inlineCaption": "Industrial roof, Massa Lombarda.",
+        "lead": "&ldquo;Working at height safety&rdquo; covers every measure that protects people working on a roof from the risk of falling: lifelines, anchor points, guardrails and safe access routes. In Italy they are required by law (Legislative Decree 81/2008 and regional regulations &mdash; in Emilia-Romagna, DGR 699/2015) for any work on a roof, not only for the initial installation.",
+        "sections": [
+          {
+            "id": "perche",
+            "heading": "Why it matters",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "A solar system does not end at installation. Over its lifetime it will need module cleaning, checks on inverters and cabling, replacements and inspections after storms."
+              },
+              {
+                "type": "quote",
+                "html": "Every trip onto the roof is an exposure to risk: falling from height remains the leading cause of serious injury on building sites."
+              },
+              {
+                "type": "p",
+                "html": "Planning permanent devices from the outset means making <strong>every future access safe</strong>, not just the first one, and putting the client in order towards everyone who will need to work up there."
+              },
+              {
+                "type": "figure",
+                "position": "inline"
+              }
+            ]
+          },
+          {
+            "id": "copertura",
+            "heading": "One single reading of the roof",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "When the solar installation is coordinated with the fall-protection systems, the roof can be approached as a whole in an orderly way, avoiding separate jobs that would create interference between:"
+              },
+              {
+                "type": "icons",
+                "items": [
+                  {
+                    "icon": "panel",
+                    "label": "Panels"
+                  },
+                  {
+                    "icon": "fixing",
+                    "label": "Fixings"
+                  },
+                  {
+                    "icon": "route",
+                    "label": "Technical routes"
+                  },
+                  {
+                    "icon": "shield",
+                    "label": "Safety devices"
+                  }
+                ]
+              },
+              {
+                "type": "p",
+                "html": "The result is a roof where the <strong>access routes to the modules are already protected</strong>, the anchors do not obstruct the panels, and penetrations through the roof covering are kept to a minimum."
+              }
+            ]
+          },
+          {
+            "id": "progetto",
+            "heading": "Every roof is its own case",
+            "blocks": [
+              {
+                "type": "p",
+                "html": "The right solution always depends on the <strong>design</strong>, the <strong>structure of the roof</strong> and the <strong>guidance of a qualified technician</strong>, who assesses materials, pitches, access points and the building&rsquo;s intended use."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

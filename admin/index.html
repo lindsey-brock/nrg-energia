@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Admin — NRG Energia</title>
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-dark:#1a4d2e; --green-mid:#2d7a4a; --green-light:#4aab6d; --green-pale:#e8f5ec;
+      --yellow:#f5c842; --blue:#2563a8; --red:#b3261e;
+      --off-white:#f7f6f2; --warm-gray:#ece9e3;
+      --text-dark:#1a1a18; --text-mid:#4a4a44; --text-light:#888880;
+      --white:#fff; --radius:12px; --radius-sm:8px;
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--off-white); color:var(--text-dark); line-height:1.6; }
+    a { color: var(--green-mid); }
+    .syne { font-family:'Syne',sans-serif; }
+
+    /* ── sign in ─────────────────────────────────────────────────────────── */
+    .gate { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
+            background:linear-gradient(135deg,#1a5c3a 0%,#52b788 40%,#1a3a5c 70%,#0d1f3c 100%); }
+    .gate-card { background:var(--white); border-radius:var(--radius); padding:40px; width:100%; max-width:400px;
+                 box-shadow:0 24px 64px rgba(0,0,0,.28); }
+    .gate-logo { display:flex; align-items:center; gap:10px; margin-bottom:24px; }
+    .dots { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; width:34px; }
+    .dot { width:9px; height:9px; border-radius:50%; }
+    .dot.y{background:var(--yellow)} .dot.b{background:var(--blue)} .dot.g{background:var(--green-light)}
+    .gate h1 { font-family:'Syne',sans-serif; font-size:22px; font-weight:700; }
+    .gate p.sub { font-size:14px; color:var(--text-mid); margin-bottom:24px; }
+
+    label.f { display:block; font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
+              color:var(--text-light); margin-bottom:7px; }
+    input.f, textarea.f, select.f {
+      width:100%; font-family:'DM Sans',sans-serif; font-size:15px; color:var(--text-dark);
+      background:var(--off-white); border:1px solid var(--warm-gray); border-radius:var(--radius-sm);
+      padding:11px 14px; transition:border-color .2s, background .2s; }
+    input.f:focus, textarea.f:focus, select.f:focus { outline:none; border-color:var(--green-mid); background:var(--white); }
+    textarea.f { resize:vertical; min-height:88px; line-height:1.65; }
+
+    .btn { font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; border:none; cursor:pointer;
+           border-radius:50px; padding:12px 26px; transition:background .2s, transform .15s; }
+    .btn-primary { background:var(--green-dark); color:#fff; }
+    .btn-primary:hover:not(:disabled) { background:var(--green-mid); }
+    .btn:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-ghost { background:transparent; border:1px solid var(--warm-gray); color:var(--text-mid); }
+    .btn-ghost:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
+    .btn-sm { padding:8px 16px; font-size:13px; }
+    .btn-danger { background:transparent; border:1px solid #e6c9c6; color:var(--red); }
+    .btn-danger:hover { background:#fdf1f0; }
+
+    .msg { font-size:13.5px; padding:11px 14px; border-radius:var(--radius-sm); margin-bottom:16px; display:none; }
+    .msg.show { display:block; }
+    .msg.err { background:#fdf1f0; color:var(--red); border:1px solid #e6c9c6; }
+    .msg.ok  { background:var(--green-pale); color:var(--green-dark); border:1px solid #bfe3cc; }
+
+    /* ── shell ───────────────────────────────────────────────────────────── */
+    .app { display:none; min-height:100vh; grid-template-columns:236px 1fr; }
+    .app.show { display:grid; }
+    aside.side { background:#111a14; color:rgba(255,255,255,.62); padding:24px 0; display:flex; flex-direction:column; }
+    .side-logo { display:flex; align-items:center; gap:10px; padding:0 22px 24px; }
+    .side-logo span { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:#fff; letter-spacing:-.2px; }
+    .side-tag { font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.35);
+                padding:0 22px 10px; }
+    nav.side-nav { display:flex; flex-direction:column; }
+    nav.side-nav button { display:flex; align-items:center; gap:11px; background:none; border:none; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:14.5px; color:rgba(255,255,255,.62); text-align:left;
+      padding:12px 22px; border-left:3px solid transparent; transition:color .2s, background .2s; }
+    nav.side-nav button:hover { color:#fff; background:rgba(255,255,255,.04); }
+    nav.side-nav button.active { color:#fff; background:rgba(255,255,255,.07); border-left-color:var(--green-light); }
+    .side-foot { margin-top:auto; padding:18px 22px 0; border-top:1px solid rgba(255,255,255,.08); }
+    .side-foot a, .side-foot button { font-size:12.5px; color:rgba(255,255,255,.5); background:none; border:none;
+      padding:5px 0; cursor:pointer; display:block; font-family:'DM Sans',sans-serif; text-decoration:none; }
+    .side-foot a:hover, .side-foot button:hover { color:#fff; }
+
+    main.work { padding:34px 40px 64px; max-width:1180px; overflow-x:hidden; }
+    .work h2.title { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; letter-spacing:-.01em; }
+    .work p.lede { font-size:14.5px; color:var(--text-mid); margin-bottom:26px; }
+    .head-row { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
+
+    .card { background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius); padding:22px 24px; margin-bottom:16px; }
+    .card h3 { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:3px; }
+    .card .meta { font-size:12.5px; color:var(--text-light); }
+
+    .list-row { display:flex; align-items:center; gap:16px; }
+    .list-row img { width:76px; height:52px; object-fit:cover; border-radius:6px; background:var(--warm-gray); flex-shrink:0; }
+    .list-row .grow { flex:1; min-width:0; }
+    .pill { display:inline-block; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
+            padding:3px 10px; border-radius:50px; background:var(--green-pale); color:var(--green-dark); }
+    .pill.blue { background:#e6f0fb; color:var(--blue); }
+    .pill.grey { background:var(--warm-gray); color:var(--text-mid); }
+
+    /* bilingual editor */
+    .lang-cols { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+    .lang-col h4 { font-size:11px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase;
+                   color:var(--green-dark); margin-bottom:14px; padding-bottom:8px; border-bottom:2px solid var(--green-pale); }
+    .field { margin-bottom:14px; }
+    .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .editor-foot { position:sticky; bottom:0; background:var(--off-white); padding:16px 0 0; margin-top:8px;
+                   border-top:1px solid var(--warm-gray); display:flex; gap:10px; align-items:center; }
+
+    /* marketing */
+    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+    .stat { background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius); padding:18px 20px; }
+    .stat .k { font-size:10px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:var(--text-light); }
+    .stat .v { font-family:'Syne',sans-serif; font-size:27px; font-weight:800; color:var(--green-dark); line-height:1.2; margin-top:6px; }
+    .stat .v.muted { color:var(--warm-gray); }
+    .setup-list { list-style:none; margin:12px 0 0; }
+    .setup-list li { position:relative; padding-left:24px; font-size:13.5px; color:var(--text-mid); margin-bottom:8px; }
+    .setup-list li::before { content:''; position:absolute; left:6px; top:9px; width:6px; height:6px; border-radius:50%; background:var(--green-light); }
+    code.env { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12.5px; background:var(--off-white);
+               border:1px solid var(--warm-gray); border-radius:4px; padding:1px 6px; color:var(--text-dark); }
+    .conn-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:16px; }
+    .status { display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700;
+              letter-spacing:.5px; text-transform:uppercase; }
+    .status::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--text-light); }
+    .status.on { color:var(--green-dark); } .status.on::before { background:var(--green-light); }
+    .status.off { color:var(--text-light); }
+
+    .empty { text-align:center; padding:52px 24px; color:var(--text-light); font-size:14.5px; }
+    .spinner { display:inline-block; width:15px; height:15px; border:2px solid var(--warm-gray);
+               border-top-color:var(--green-mid); border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    @media (max-width:900px) {
+      .app.show { grid-template-columns:1fr; }
+      aside.side { flex-direction:row; align-items:center; overflow-x:auto; padding:10px 0; }
+      .side-logo, .side-tag, .side-foot { display:none; }
+      nav.side-nav { flex-direction:row; }
+      main.work { padding:24px 20px 48px; }
+      .lang-cols, .stat-grid, .row-2 { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── sign in ─────────────────────────────────────────────────────────────── -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">
+      <div class="dots">
+        <div class="dot y"></div><div class="dot y"></div><div class="dot y"></div>
+        <div class="dot b"></div><div class="dot b"></div><div class="dot b"></div>
+        <div class="dot g"></div><div class="dot g"></div><div class="dot g"></div>
+      </div>
+      <h1>NRG Energia</h1>
+    </div>
+    <p class="sub">Area riservata — gestione contenuti e marketing.</p>
+    <div class="msg err" id="gateMsg"></div>
+    <form id="gateForm">
+      <div class="field">
+        <label class="f" for="pw">Password</label>
+        <input class="f" type="password" id="pw" autocomplete="current-password" required>
+      </div>
+      <button class="btn btn-primary" style="width:100%" id="gateBtn" type="submit">Accedi</button>
+    </form>
+  </div>
+</div>
+
+<!-- ── dashboard ───────────────────────────────────────────────────────────── -->
+<div class="app" id="app">
+  <aside class="side">
+    <div class="side-logo">
+      <div class="dots">
+        <div class="dot y"></div><div class="dot y"></div><div class="dot y"></div>
+        <div class="dot b"></div><div class="dot b"></div><div class="dot b"></div>
+        <div class="dot g"></div><div class="dot g"></div><div class="dot g"></div>
+      </div>
+      <span>NRG ADMIN</span>
+    </div>
+    <div class="side-tag">Contenuti</div>
+    <nav class="side-nav" id="nav">
+      <button data-view="blog" class="active">Blog</button>
+      <button data-view="portfolio">Portfolio</button>
+      <div class="side-tag" style="padding-top:16px">Marketing</div>
+      <button data-view="marketing">Andamento</button>
+      <button data-view="connections">Connessioni</button>
+    </nav>
+    <div class="side-foot">
+      <a href="../index" target="_blank" rel="noopener">Apri il sito ↗</a>
+      <button id="logoutBtn">Esci</button>
+    </div>
+  </aside>
+  <main class="work" id="work"></main>
+</div>
+
+<script type="module">
+const $  = (s, r = document) => r.querySelector(s);
+const el = (t, a = {}, kids = []) => {
+  const n = document.createElement(t);
+  for (const [k, v] of Object.entries(a)) {
+    if (k === 'class') n.className = v;
+    else if (k === 'html') n.innerHTML = v;
+    else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+    else if (v !== null && v !== undefined) n.setAttribute(k, v);
+  }
+  for (const c of [].concat(kids)) if (c) n.append(c);
+  return n;
+};
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+const cloudinary = (id, w = 200) =>
+  id ? `https://res.cloudinary.com/dmegrbq5k/image/upload/q_auto,f_auto,w_${w}/${id}` : '';
+
+async function api(path, opts = {}) {
+  const r = await fetch(`/api/admin/${path}`, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(data.error || `Request failed (${r.status})`), { code: data.code, status: r.status });
+  return data;
+}
+
+// ── sign in ────────────────────────────────────────────────────────────────
+const gate = $('#gate'), app = $('#app'), work = $('#work');
+function showGate(message) {
+  gate.style.display = 'flex'; app.classList.remove('show');
+  if (message) { $('#gateMsg').textContent = message; $('#gateMsg').classList.add('show'); }
+}
+function showApp() { gate.style.display = 'none'; app.classList.add('show'); render(); }
+
+$('#gateForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('#gateBtn'), msg = $('#gateMsg');
+  msg.classList.remove('show'); btn.disabled = true; btn.textContent = 'Verifica…';
+  try {
+    await api('login', { method: 'POST', body: { password: $('#pw').value } });
+    $('#pw').value = ''; showApp();
+  } catch (err) {
+    msg.textContent = err.code === 'not_configured'
+      ? 'Admin non configurato: mancano ADMIN_PASSWORD e ADMIN_SESSION_SECRET.'
+      : err.message;
+    msg.classList.add('show');
+  } finally { btn.disabled = false; btn.textContent = 'Accedi'; }
+});
+
+$('#logoutBtn').addEventListener('click', async () => {
+  await api('logout', { method: 'POST' }).catch(() => {});
+  location.reload();
+});
+
+// ── routing ────────────────────────────────────────────────────────────────
+let view = 'blog';
+$('#nav').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-view]');
+  if (!b) return;
+  view = b.dataset.view;
+  [...$('#nav').querySelectorAll('button')].forEach((x) => x.classList.toggle('active', x === b));
+  render();
+});
+
+const VIEWS = {};
+function render() { work.innerHTML = ''; VIEWS[view](work); }
+
+function header(parent, title, lede, action) {
+  parent.append(el('div', { class: 'head-row' }, [
+    el('div', {}, [el('h2', { class: 'title', html: title }), el('p', { class: 'lede', html: lede })]),
+    action || null,
+  ]));
+}
+const loading = (parent) => parent.append(el('div', { class: 'empty', html: '<span class="spinner"></span> Caricamento…' }));
+
+// ── blog ───────────────────────────────────────────────────────────────────
+let postsDoc = null;
+
+VIEWS.blog = async (root) => {
+  header(root, 'Blog', 'Gli articoli pubblicati su /blog e /services/en/blog. Salvando, le pagine HTML vengono rigenerate.');
+  const body = el('div'); root.append(body); loading(body);
+  try {
+    const { data } = await api('content?type=posts');
+    postsDoc = data;
+    body.innerHTML = '';
+    if (!data.posts?.length) { body.append(el('div', { class: 'empty', html: 'Nessun articolo.' })); return; }
+    for (const post of data.posts) body.append(postRow(post));
+  } catch (err) { failed(body, err); }
+};
+
+function postRow(post) {
+  const card = el('div', { class: 'card' });
+  card.append(el('div', { class: 'list-row' }, [
+    el('img', { src: cloudinary(post.image, 200), alt: '' }),
+    el('div', { class: 'grow' }, [
+      el('div', { html: `<span class="pill${post.category === 'coperture' ? ' blue' : ''}">${esc(post.it.tag)}</span>
+        ${post.published === false ? '<span class="pill grey" style="margin-left:6px">Bozza</span>' : ''}` }),
+      el('h3', { html: esc(post.it.title.replace(/&mdash;/g, '—')), style: 'margin-top:6px' }),
+      el('div', { class: 'meta', html: `${esc(post.it.dateLabel)} · /blog/${esc(post.it.slug)} · EN: /${esc(post.en.slug)}` }),
+    ]),
+    el('button', { class: 'btn btn-ghost btn-sm', onclick: () => openPostEditor(post) }, ['Modifica']),
+  ]));
+  return card;
+}
+
+const FIELDS = [
+  ['title', 'Titolo', 'input'], ['excerpt', 'Estratto', 'textarea'],
+  ['metaDescription', 'Meta description (SEO)', 'textarea'],
+  ['lead', 'Paragrafo introduttivo', 'textarea'],
+];
+
+function openPostEditor(post) {
+  work.innerHTML = '';
+  header(work, esc(post.it.title.replace(/&mdash;/g, '—')),
+    'Le due lingue si modificano affiancate. I campi accettano HTML (&lt;strong&gt;, &amp;rsquo;).',
+    el('button', { class: 'btn btn-ghost btn-sm', onclick: render }, ['← Tutti gli articoli']));
+
+  const msg = el('div', { class: 'msg' }); work.append(msg);
+  const draft = structuredClone(post);
+
+  // shared (non-translated) settings
+  const shared = el('div', { class: 'card' }, [el('h3', { html: 'Impostazioni' })]);
+  const sharedRow = el('div', { class: 'row-2', style: 'margin-top:14px' });
+  sharedRow.append(
+    field('Data', draft.it.dateLabel, (v) => { draft.it.dateLabel = v; }),
+    field('Data (EN)', draft.en.dateLabel, (v) => { draft.en.dateLabel = v; }),
+    field('Categoria', draft.category, (v) => { draft.category = v; }, 'select', ['fotovoltaico', 'coperture', 'bonifica-amianto']),
+    field('Immagine (Cloudinary ID)', draft.image, (v) => { draft.image = v; }),
+  );
+  shared.append(sharedRow);
+  const pub = el('div', { class: 'field', style: 'margin-top:6px' });
+  const cb = el('input', { type: 'checkbox', id: 'pubcb', style: 'width:auto;margin-right:8px' });
+  cb.checked = draft.published !== false;
+  cb.addEventListener('change', () => { draft.published = cb.checked; });
+  pub.append(cb, el('label', { for: 'pubcb', style: 'font-size:14px' }, ['Pubblicato']));
+  shared.append(pub);
+  work.append(shared);
+
+  // bilingual columns
+  const cols = el('div', { class: 'lang-cols' });
+  for (const [lang, label] of [['it', 'Italiano'], ['en', 'English']]) {
+    const col = el('div', { class: 'lang-col card' }, [el('h4', { html: label })]);
+    col.append(field('Slug (URL)', draft[lang].slug, (v) => { draft[lang].slug = v; }));
+    col.append(field('Etichetta categoria', draft[lang].tag, (v) => { draft[lang].tag = v; }));
+    col.append(field('Tempo di lettura', draft[lang].readLabel, (v) => { draft[lang].readLabel = v; }));
+    for (const [key, lbl, kind] of FIELDS) {
+      col.append(field(lbl, draft[lang][key], (v) => { draft[lang][key] = v; }, kind));
+    }
+    col.append(field('Testo alternativo immagine', draft[lang].imageAlt, (v) => { draft[lang].imageAlt = v; }));
+    col.append(el('h4', { html: 'Sezioni', style: 'margin-top:22px' }));
+    draft[lang].sections.forEach((sec, i) => {
+      col.append(field(`Titolo sezione ${i + 1}`, sec.heading, (v) => { sec.heading = v; }));
+      sec.blocks.forEach((b, j) => {
+        if (b.type === 'p' || b.type === 'quote') {
+          col.append(field(`${b.type === 'quote' ? 'Citazione' : 'Paragrafo'} ${i + 1}.${j + 1}`,
+            b.html, (v) => { b.html = v; }, 'textarea'));
+        }
+      });
+    });
+    cols.append(col);
+  }
+  work.append(cols);
+
+  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
+  work.append(el('div', { class: 'editor-foot' }, [
+    saveBtn,
+    el('button', { class: 'btn btn-ghost', onclick: render }, ['Annulla']),
+  ]));
+
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner"></span> Salvataggio…';
+    msg.className = 'msg';
+    try {
+      const idx = postsDoc.posts.findIndex((p) => p.id === post.id);
+      postsDoc.posts[idx] = draft;
+      const r = await api('content?type=posts', { method: 'PUT', body: { data: postsDoc } });
+      msg.className = 'msg ok show';
+      msg.innerHTML = `Salvato. Rigenerate ${r.regenerated.length} pagine`
+        + (r.commit ? ` · commit <code class="env">${r.commit}</code>` : '')
+        + (r.note ? ` · ${esc(r.note)}` : '');
+    } catch (err) {
+      msg.className = 'msg err show'; msg.textContent = err.message;
+    } finally { saveBtn.disabled = false; saveBtn.textContent = 'Salva e rigenera'; }
+  });
+}
+
+function field(label, value, onInput, kind = 'input', options = []) {
+  const wrap = el('div', { class: 'field' }, [el('label', { class: 'f', html: label })]);
+  let input;
+  if (kind === 'select') {
+    input = el('select', { class: 'f' });
+    for (const o of options) input.append(el('option', { value: o, selected: o === value ? '' : null }, [o]));
+  } else if (kind === 'textarea') {
+    input = el('textarea', { class: 'f' });
+    input.value = value ?? '';
+  } else {
+    input = el('input', { class: 'f', type: 'text' });
+    input.value = value ?? '';
+  }
+  input.addEventListener('input', () => onInput(input.value));
+  input.addEventListener('change', () => onInput(input.value));
+  wrap.append(input);
+  return wrap;
+}
+
+// ── portfolio ──────────────────────────────────────────────────────────────
+let portfolioDoc = null;
+
+VIEWS.portfolio = async (root) => {
+  header(root, 'Portfolio', 'I lavori mostrati su /portfolio. Le modifiche sono salvate in content/portfolio.json.',
+    el('button', { class: 'btn btn-primary btn-sm', onclick: () => openProjectEditor(null) }, ['+ Nuovo lavoro']));
+  const body = el('div'); root.append(body); loading(body);
+  try {
+    const { data } = await api('content?type=portfolio');
+    portfolioDoc = data;
+    body.innerHTML = '';
+    body.append(el('p', { class: 'meta', style: 'margin-bottom:14px',
+      html: `${data.projects.length} lavori` }));
+    for (const p of data.projects) body.append(projectRow(p));
+  } catch (err) { failed(body, err); }
+};
+
+function projectRow(p) {
+  return el('div', { class: 'card' }, [el('div', { class: 'list-row' }, [
+    el('img', { src: cloudinary(p.image, 200), alt: '' }),
+    el('div', { class: 'grow' }, [
+      el('div', { html: `<span class="pill${p.category === 'coperture' ? ' blue' : ''}">${esc(p.it.tag)}</span>` }),
+      el('h3', { html: esc(p.it.title), style: 'margin-top:6px' }),
+      el('div', { class: 'meta', html: `${esc(p.it.location)} · EN: ${esc(p.en.title)}` }),
+    ]),
+    el('button', { class: 'btn btn-ghost btn-sm', onclick: () => openProjectEditor(p) }, ['Modifica']),
+  ])]);
+}
+
+function openProjectEditor(project) {
+  const isNew = !project;
+  const draft = project ? structuredClone(project) : {
+    id: `project-${Date.now().toString(36)}`, published: true, category: 'fotovoltaico', badge: 'solar',
+    image: '', images: [],
+    it: { tag: 'Fotovoltaico', title: '', location: '', description: '' },
+    en: { tag: 'Solar Power', title: '', location: '', description: '' },
+  };
+
+  work.innerHTML = '';
+  header(work, isNew ? 'Nuovo lavoro' : esc(draft.it.title || 'Lavoro'),
+    'Compila entrambe le lingue: il sito mostra la versione corrispondente alla lingua scelta dal visitatore.',
+    el('button', { class: 'btn btn-ghost btn-sm', onclick: render }, ['← Tutti i lavori']));
+  const msg = el('div', { class: 'msg' }); work.append(msg);
+
+  const shared = el('div', { class: 'card' }, [el('h3', { html: 'Impostazioni' })]);
+  shared.append(el('div', { class: 'row-2', style: 'margin-top:14px' }, [
+    field('Categoria', draft.category, (v) => { draft.category = v; }, 'select', ['fotovoltaico', 'coperture', 'amianto']),
+    field('Colore etichetta', draft.badge, (v) => { draft.badge = v; }, 'select', ['solar', 'roofing', 'asbestos']),
+    field('Immagine principale (Cloudinary ID)', draft.image, (v) => { draft.image = v; }),
+    field('Galleria (ID separati da virgola)', (draft.images || []).join(', '),
+      (v) => { draft.images = v.split(',').map((s) => s.trim()).filter(Boolean); }),
+  ]));
+  work.append(shared);
+
+  const cols = el('div', { class: 'lang-cols' });
+  for (const [lang, label] of [['it', 'Italiano'], ['en', 'English']]) {
+    const col = el('div', { class: 'lang-col card' }, [el('h4', { html: label })]);
+    col.append(field('Etichetta', draft[lang].tag, (v) => { draft[lang].tag = v; }));
+    col.append(field('Titolo', draft[lang].title, (v) => { draft[lang].title = v; }));
+    col.append(field('Località', draft[lang].location, (v) => { draft[lang].location = v; }));
+    col.append(field('Descrizione', draft[lang].description, (v) => { draft[lang].description = v; }, 'textarea'));
+    cols.append(col);
+  }
+  work.append(cols);
+
+  const saveBtn = el('button', { class: 'btn btn-primary' }, [isNew ? 'Aggiungi lavoro' : 'Salva']);
+  const foot = el('div', { class: 'editor-foot' }, [saveBtn, el('button', { class: 'btn btn-ghost', onclick: render }, ['Annulla'])]);
+  if (!isNew) {
+    foot.append(el('button', {
+      class: 'btn btn-danger btn-sm', style: 'margin-left:auto',
+      onclick: async () => {
+        if (!confirm('Eliminare questo lavoro dal portfolio?')) return;
+        portfolioDoc.projects = portfolioDoc.projects.filter((p) => p.id !== draft.id);
+        await savePortfolio(msg, saveBtn);
+      },
+    }, ['Elimina']));
+  }
+  work.append(foot);
+
+  saveBtn.addEventListener('click', async () => {
+    const i = portfolioDoc.projects.findIndex((p) => p.id === draft.id);
+    if (i >= 0) portfolioDoc.projects[i] = draft; else portfolioDoc.projects.unshift(draft);
+    await savePortfolio(msg, saveBtn);
+  });
+}
+
+async function savePortfolio(msg, btn) {
+  btn.disabled = true; const label = btn.textContent;
+  btn.innerHTML = '<span class="spinner"></span> Salvataggio…'; msg.className = 'msg';
+  try {
+    const r = await api('content?type=portfolio', { method: 'PUT', body: { data: portfolioDoc } });
+    msg.className = 'msg ok show';
+    msg.innerHTML = 'Salvato in content/portfolio.json'
+      + (r.commit ? ` · commit <code class="env">${r.commit}</code>` : '')
+      + '. <strong>Nota:</strong> le pagine portfolio non sono ancora rigenerate da questo file.';
+  } catch (err) { msg.className = 'msg err show'; msg.textContent = err.message; }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+
+// ── marketing ──────────────────────────────────────────────────────────────
+VIEWS.marketing = async (root) => {
+  header(root, 'Andamento', 'Dati di ricerca organica da Google Search Console.');
+  const body = el('div'); root.append(body); loading(body);
+  try {
+    const d = await api('search-console?days=28');
+    body.innerHTML = '';
+    if (!d.configured) {
+      body.append(el('div', { class: 'card' }, [
+        el('h3', { html: 'Google Search Console non è ancora collegato' }),
+        el('p', { class: 'meta', style: 'margin-top:4px',
+          html: `Mancano: ${d.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }),
+        el('ul', { class: 'setup-list', html: d.setup.map((s) => `<li>${esc(s)}</li>`).join('') }),
+      ]));
+      body.append(el('div', { class: 'stat-grid' }, ['Click', 'Impression', 'CTR', 'Posizione media']
+        .map((k) => el('div', { class: 'stat' }, [
+          el('div', { class: 'k', html: k }), el('div', { class: 'v muted', html: '—' })]))));
+      return;
+    }
+    if (d.error) { failed(body, new Error(d.error)); return; }
+    const t = d.totals;
+    body.append(el('div', { class: 'stat-grid' }, [
+      stat('Click', t.clicks?.toLocaleString('it-IT') ?? '0'),
+      stat('Impression', t.impressions?.toLocaleString('it-IT') ?? '0'),
+      stat('CTR', `${((t.ctr || 0) * 100).toFixed(1)}%`),
+      stat('Posizione media', (t.position || 0).toFixed(1)),
+    ]));
+    const rows = d.rows.map((r) => `<tr><td style="padding:7px 0">${esc(r.key)}</td>
+      <td style="text-align:right">${r.clicks}</td><td style="text-align:right">${r.impressions}</td>
+      <td style="text-align:right">${(r.ctr * 100).toFixed(1)}%</td>
+      <td style="text-align:right">${r.position.toFixed(1)}</td></tr>`).join('');
+    body.append(el('div', { class: 'card' }, [
+      el('h3', { html: `Query principali · ultimi ${d.days} giorni` }),
+      el('div', { style: 'overflow-x:auto;margin-top:12px' }, [el('table', {
+        style: 'width:100%;border-collapse:collapse;font-size:13.5px',
+        html: `<thead><tr style="text-align:left;color:var(--text-light);font-size:11px;
+                 letter-spacing:1px;text-transform:uppercase">
+               <th style="padding-bottom:8px">Query</th><th style="text-align:right">Click</th>
+               <th style="text-align:right">Impr.</th><th style="text-align:right">CTR</th>
+               <th style="text-align:right">Pos.</th></tr></thead><tbody>${rows}</tbody>`,
+      })]),
+    ]));
+  } catch (err) { failed(body, err); }
+};
+const stat = (k, v) => el('div', { class: 'stat' }, [el('div', { class: 'k', html: k }), el('div', { class: 'v', html: v })]);
+
+VIEWS.connections = async (root) => {
+  header(root, 'Connessioni', 'Ogni piattaforma è collegata solo quando le sue credenziali sono presenti nell’ambiente.');
+  const body = el('div'); root.append(body); loading(body);
+  try {
+    const { platforms, connectedCount } = await api('integrations');
+    body.innerHTML = '';
+    body.append(el('p', { class: 'meta', style: 'margin-bottom:16px',
+      html: `${connectedCount} di ${platforms.length} collegate` }));
+    const grid = el('div', { class: 'conn-grid' });
+    for (const p of platforms) {
+      grid.append(el('div', { class: 'card' }, [
+        el('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:10px' }, [
+          el('h3', { html: esc(p.name) }),
+          el('span', { class: `status ${p.connected ? 'on' : 'off'}`, html: p.connected ? 'Collegato' : 'Non collegato' }),
+        ]),
+        el('p', { class: 'meta', style: 'margin-top:6px', html: esc(p.metrics) }),
+        el('p', { class: 'meta', style: 'margin-top:10px',
+          html: p.connected ? '' : `Variabili mancanti: ${p.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }),
+        p.connected ? null : el('ul', { class: 'setup-list', html: p.steps.map((s) => `<li>${esc(s)}</li>`).join('') }),
+        el('p', { class: 'meta', style: 'margin-top:10px;font-style:italic', html: esc(p.effort) }),
+      ]));
+    }
+    body.append(grid);
+  } catch (err) { failed(body, err); }
+};
+
+function failed(parent, err) {
+  parent.innerHTML = '';
+  if (err.status === 401) { showGate('Sessione scaduta. Accedi di nuovo.'); return; }
+  parent.append(el('div', { class: 'msg err show', html: esc(err.message) }));
+}
+
+// ── boot ───────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    const s = await api('session');
+    if (!s.configured) { showGate('Admin non configurato su questo deployment.'); return; }
+    s.authenticated ? showApp() : showGate();
+  } catch {
+    showGate('API non raggiungibile. L’admin richiede le funzioni serverless (vercel dev o un deploy su Vercel).');
+  }
+})();
+</script>
+</body>
+</html>

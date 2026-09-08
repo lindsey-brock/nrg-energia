@@ -5,3 +5,7 @@
 ~$*.docx
 ~$*.xlsx
 ~$*.pptx
+
+# Local env — never commit
+.env*.local
+.env

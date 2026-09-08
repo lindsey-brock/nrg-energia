@@ -1,9 +1,14 @@
 {
   "name": "nrg-energia-pagina-aziendale",
   "version": "1.0.0",
-  "description": "NRG Energia — contact form API",
+  "description": "NRG Energia \u2014 company website, contact API and admin dashboard",
   "private": true,
   "dependencies": {
     "resend": "^3.2.0"
+  },
+  "scripts": {
+    "dev": "node scripts/dev-server.mjs 3100",
+    "build:blog": "node scripts/build.mjs",
+    "check:blog": "node scripts/build.mjs --check"
   }
 }
