@@ -249,10 +249,13 @@
 
   .news { background: var(--off-white); }
   .news-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 48px; }
-  .news-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-  .news-card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--warm-gray); overflow: hidden; transition: all 0.25s; }
+  .news-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+  .news-card { display: block; text-decoration: none; background: var(--white); border-radius: var(--radius); border: 1px solid var(--warm-gray); overflow: hidden; transition: all 0.25s; }
   .news-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-  .news-tag-bar { padding: 14px 20px 0; }
+  .news-media { position: relative; aspect-ratio: 16/10; overflow: hidden; background: var(--warm-gray); }
+  .news-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+  .news-card:hover .news-media img { transform: scale(1.06); }
+  .news-media .news-tag { position: absolute; top: 12px; left: 12px; z-index: 1; box-shadow: 0 2px 8px rgba(10,25,18,0.22); }
   .news-tag { display: inline-block; padding: 4px 12px; background: var(--green-pale); color: var(--green-dark); font-size: 11px; font-weight: 600; border-radius: 50px; text-transform: uppercase; letter-spacing: 0.5px; }
   .news-tag.blue { background: #e6f0fb; color: var(--blue); }
   .news-tag.amber { background: #fdf5e0; color: #8a5c10; }
@@ -902,21 +905,17 @@
       <h2 class="section-title">News & Blog</h2>
       <p class="section-desc">Approfondimenti su incentivi fiscali, tecnologie e novità dal settore energetico.</p>
     </div>
-    <a href="./coming-soon" class="btn-primary" style="flex-shrink:0">Vedi tutti gli articoli →</a>
+    <a href="blog" id="news-cta" class="btn-primary" style="flex-shrink:0">Vedi tutti gli articoli →</a>
   </div>
   <div class="news-grid">
-    <div class="news-card">
-      <div class="news-tag-bar"><span class="news-tag">Fotovoltaico</span></div>
-      <div class="news-body"><div class="news-date">12 marzo 2026</div><div class="news-title">Come funziona il nuovo FER2 per impianti industriali</div><div class="news-excerpt">Guida agli incentivi 2026 per chi vuole installare un impianto fotovoltaico.</div><a href="./coming-soon" class="news-read">Leggi di più →</a></div>
-    </div>
-    <div class="news-card">
-      <div class="news-tag-bar"><span class="news-tag blue">Normativa</span></div>
-      <div class="news-body"><div class="news-date">28 febbraio 2026</div><div class="news-title">Aggiornamento normativo impianti elettrici civili 2026</div><div class="news-excerpt">Cosa cambia per le installazioni residenziali e industriali quest'anno.</div><a href="./coming-soon" class="news-read">Leggi di più →</a></div>
-    </div>
-    <div class="news-card">
-      <div class="news-tag-bar"><span class="news-tag amber">Amianto</span></div>
-      <div class="news-body"><div class="news-date">15 febbraio 2026</div><div class="news-title">Bonifica amianto: tempi, costi e agevolazioni disponibili</div><div class="news-excerpt">Tutto quello che devi sapere prima di avviare una pratica di smaltimento.</div><a href="./coming-soon" class="news-read">Leggi di più →</a></div>
-    </div>
+    <a class="news-card" id="news-link-1" href="blog/bonus-casa-2026">
+      <div class="news-media"><img src="https://res.cloudinary.com/dmegrbq5k/image/upload/q_auto,f_auto,w_800/v1788802289/watt-a-lot-Ja8t8nJN2I4-unsplash_hvypdi.jpg" alt="Impianto fotovoltaico residenziale integrato su copertura" loading="lazy" decoding="async"><span class="news-tag">Fotovoltaico</span></div>
+      <div class="news-body"><div class="news-date">3 settembre 2026</div><div class="news-title">Bonus Casa 2026 — Legge di Bilancio 2026</div><div class="news-excerpt">La Legge di Bilancio 2026 conferma le aliquote del 2025: detrazione al 50% per l'abitazione principale e al 36% in tutti gli altri casi.</div><span class="news-read">Leggi di più →</span></div>
+    </a>
+    <a class="news-card" id="news-link-2" href="blog/sicurezza-in-quota">
+      <div class="news-media"><img src="https://res.cloudinary.com/dmegrbq5k/image/upload/q_auto,f_auto,w_800/v1788802976/raze-solar-pIcseKMisrs-unsplash_mbpchy.jpg" alt="Installatori con imbracatura di sicurezza durante la posa di un pannello fotovoltaico in copertura" loading="lazy" decoding="async"><span class="news-tag blue">Coperture</span></div>
+      <div class="news-body"><div class="news-date">28 agosto 2026</div><div class="news-title">Sicurezza in quota</div><div class="news-excerpt">Linea vita e punti di ancoraggio possono essere coordinati con il nuovo impianto fotovoltaico, ragionando sull'intera copertura in un'unica soluzione.</div><span class="news-read">Leggi di più →</span></div>
+    </a>
   </div>
   <div class="news-mobile-dots" id="news-mobile-dots"></div>
 </section>
@@ -954,7 +953,7 @@
     </div>
     <div class="footer-col">
       <h4>Azienda</h4>
-      <ul><li><a href="./coming-soon">Chi siamo</a></li><li><a href="portfolio" id="footer-link-portfolio">Portfolio</a></li><li><a href="./coming-soon">News & Blog</a></li><li><a href="#contatti">Contatti</a></li></ul>
+      <ul><li><a href="./coming-soon">Chi siamo</a></li><li><a href="portfolio" id="footer-link-portfolio">Portfolio</a></li><li><a href="blog" id="footer-link-blog">News & Blog</a></li><li><a href="#contatti">Contatti</a></li></ul>
     </div>
     <div class="footer-col footer-contact">
       <h4>Contatti</h4>
@@ -1148,10 +1147,10 @@ var T = {
     news_title: 'News & Blog',
     news_desc: 'Approfondimenti su incentivi fiscali, tecnologie e novità dal settore energetico.',
     news_cta: 'Vedi tutti gli articoli →',
-    news1_tag: 'Fotovoltaico', news2_tag: 'Normativa', news3_tag: 'Amianto',
-    news1_date: '12 marzo 2026', news1_title: 'Come funziona il nuovo FER2 per impianti industriali', news1_excerpt: 'Guida agli incentivi 2026 per chi vuole installare un impianto fotovoltaico.', news1_read: 'Leggi di più →',
-    news2_date: '28 febbraio 2026', news2_title: 'Aggiornamento normativo impianti elettrici civili 2026', news2_excerpt: "Cosa cambia per le installazioni residenziali e industriali quest'anno.", news2_read: 'Leggi di più →',
-    news3_date: '15 febbraio 2026', news3_title: 'Bonifica amianto: tempi, costi e agevolazioni disponibili', news3_excerpt: 'Tutto quello che devi sapere prima di avviare una pratica di smaltimento.', news3_read: 'Leggi di più →',
+    news1_tag: 'Fotovoltaico', news2_tag: 'Coperture',
+    news1_alt: 'Impianto fotovoltaico residenziale integrato su copertura', news2_alt: 'Installatori con imbracatura di sicurezza durante la posa di un pannello fotovoltaico in copertura',
+    news1_date: '3 settembre 2026', news1_title: 'Bonus Casa 2026 — Legge di Bilancio 2026', news1_excerpt: "La Legge di Bilancio 2026 conferma le aliquote del 2025: detrazione al 50% per l'abitazione principale e al 36% in tutti gli altri casi.", news1_read: 'Leggi di più →',
+    news2_date: '28 agosto 2026', news2_title: 'Sicurezza in quota', news2_excerpt: "Linea vita e punti di ancoraggio possono essere coordinati con il nuovo impianto fotovoltaico, ragionando sull'intera copertura in un'unica soluzione.", news2_read: 'Leggi di più →',
 
     cta_title: 'Pronti a fare il <em>passo successivo?</em>',
     cta_btn: 'Richiedi preventivo gratuito',
@@ -1224,10 +1223,10 @@ var T = {
     news_title: 'News & Blog',
     news_desc: 'Insights on tax incentives, technology and the latest from the energy sector.',
     news_cta: 'View all articles →',
-    news1_tag: 'Solar Power', news2_tag: 'Legislation', news3_tag: 'Asbestos',
-    news1_date: '12 March 2026', news1_title: 'How the new FER2 scheme works for industrial plants', news1_excerpt: 'A guide to 2026 incentives for those looking to install a solar panel system.', news1_read: 'Read more →',
-    news2_date: '28 February 2026', news2_title: 'Legislative update for residential electrical systems 2026', news2_excerpt: "What's changing for residential and industrial installations this year.", news2_read: 'Read more →',
-    news3_date: '15 February 2026', news3_title: 'Asbestos removal: timelines, costs and available incentives', news3_excerpt: 'Everything you need to know before starting a disposal process.', news3_read: 'Read more →',
+    news1_tag: 'Solar Power', news2_tag: 'Roofing',
+    news1_alt: 'Integrated residential solar system on a roof', news2_alt: 'Installers wearing safety harnesses fitting a solar panel on a roof',
+    news1_date: '3 September 2026', news1_title: 'Home Bonus 2026 — the 2026 Budget Law', news1_excerpt: 'The 2026 Budget Law confirms the 2025 rates: a 50% deduction for main homes and 36% in all other cases.', news1_read: 'Read more →',
+    news2_date: '28 August 2026', news2_title: 'Working at height safely', news2_excerpt: 'Lifelines and anchor points can be coordinated with a new solar installation, treating the whole roof as a single job.', news2_read: 'Read more →',
 
     cta_title: 'Ready to take the <em>next step?</em>',
     cta_btn: 'Request a free quote',
@@ -1321,6 +1320,7 @@ function applyTranslations(lang) {
   setOneText('#news .btn-primary',   'news_cta');
   document.querySelectorAll('.news-card').forEach(function(card, i) {
     var n = i + 1;
+    var im = card.querySelector('.news-media img'); if (im) im.alt = t['news'+n+'_alt'];
     var tg = card.querySelector('.news-tag');   if (tg) tg.textContent = t['news'+n+'_tag'];
     var d = card.querySelector('.news-date');    if (d) d.textContent = t['news'+n+'_date'];
     var ti = card.querySelector('.news-title');  if (ti) ti.textContent = t['news'+n+'_title'];
@@ -1457,7 +1457,11 @@ if (window.location.hash === '#quote') {
     'footer-link-rinnovabili': { it: 'services/energie-rinnovabili', en: 'services/en/renewable-energy' },
     'footer-link-coperture':   { it: 'services/coperture',           en: 'services/en/roofing' },
     'footer-link-amianto':     { it: 'services/bonifica-amianto',    en: 'services/en/asbestos-removal' },
-    'footer-link-portfolio':   { it: 'portfolio', en: 'services/en/portfolio' }
+    'footer-link-portfolio':   { it: 'portfolio', en: 'services/en/portfolio' },
+    'news-cta':          { it: 'blog', en: 'services/en/blog' },
+    'footer-link-blog':  { it: 'blog', en: 'services/en/blog' },
+    'news-link-1':       { it: 'blog/bonus-casa-2026',   en: 'services/en/blog/home-bonus-2026' },
+    'news-link-2':       { it: 'blog/sicurezza-in-quota', en: 'services/en/blog/working-at-height-safety' }
   };
   Object.keys(map).forEach(function(id) {
     var el = document.getElementById(id);
