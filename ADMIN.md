@@ -104,3 +104,37 @@ Each platform reports as connected only when its credentials are present. See
 
 Only Search Console has a working data path today; the other four report their
 connection status and setup steps but have no fetch implementation yet.
+
+## Moving to the client's Cloudinary account
+
+The client never signs into Cloudinary. The admin lists their images and
+receives their uploads using credentials held in the Vercel environment — the
+dashboard is the only interface they see.
+
+To hand the media over, the existing images move across first. Cloudinary has no
+account-to-account transfer, but its uploader accepts a remote URL, so the new
+account pulls each asset straight from the old account's CDN.
+
+```bash
+# .env.local — source is the current account, destination is the client's
+CLOUDINARY_CLOUD_NAME=dmegrbq5k
+CLOUDINARY_API_KEY=…
+CLOUDINARY_API_SECRET=…
+DEST_CLOUD_NAME=…
+DEST_API_KEY=…
+DEST_API_SECRET=…
+```
+
+```bash
+npm run cloudinary:list      # what would move
+npm run cloudinary:copy      # copy, preserving every public_id
+npm run cloudinary:rewrite   # swap the cloud name across the repo
+npm run check:blog           # confirm nothing else drifted
+```
+
+Delivery URLs work without the `/v<version>/` segment, and the copy preserves
+`public_id`, so **the cloud name is the only thing that changes** — 361
+references across 25 files, all handled by the rewrite step. No image URLs need
+rebuilding by hand.
+
+Keep the old account alive until the new URLs are live, then retire it.

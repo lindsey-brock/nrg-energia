@@ -1,7 +1,8 @@
 // Renders the blog HTML from content/posts.json.
 // Used by scripts/build.mjs (CLI) and api/admin/publish.js (admin dashboard).
 
-const CLOUDINARY = 'https://res.cloudinary.com/dmegrbq5k/image/upload';
+const CLOUD = (typeof process !== 'undefined' && process.env?.CLOUDINARY_CLOUD_NAME) || 'dmegrbq5k';
+const CLOUDINARY = `https://res.cloudinary.com/${CLOUD}/image/upload`;
 const img = (id, w) => `${CLOUDINARY}/q_auto,f_auto,w_${w}/${id}`;
 
 // Where each language's files live, and how to climb back to the site root.

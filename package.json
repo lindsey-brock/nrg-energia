@@ -9,6 +9,9 @@
   "scripts": {
     "dev": "node scripts/dev-server.mjs 3100",
     "build:blog": "node scripts/build.mjs",
-    "check:blog": "node scripts/build.mjs --check"
+    "check:blog": "node scripts/build.mjs --check",
+    "cloudinary:list": "node scripts/migrate-cloudinary.mjs --dry-run",
+    "cloudinary:copy": "node scripts/migrate-cloudinary.mjs --copy",
+    "cloudinary:rewrite": "node scripts/migrate-cloudinary.mjs --rewrite"
   }
 }
