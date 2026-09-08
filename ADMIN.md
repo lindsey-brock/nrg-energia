@@ -100,6 +100,27 @@ with HTML tag handling on, and writes the results into the English side. It is a
 **draft**: it overwrites the English version and should be reviewed before
 saving.
 
+## SEO
+
+The **SEO** tab audits every post in both languages straight from
+`content/posts.json` — no external service, no API key, no network call. It
+checks title and meta-description lengths against SERP display limits, missing
+alt text, thin content, section structure, slug format, and duplicate slugs or
+titles across posts. Errors cost 15 points, warnings 5.
+
+The same tab can run **PageSpeed Insights** (Lighthouse SEO, performance,
+accessibility, Core Web Vitals) against a public URL. Free, but it needs
+`PAGESPEED_API_KEY` — the keyless quota is shared across all anonymous callers
+and is permanently exhausted.
+
+### On paid SEO tools
+
+SEMrush and Ahrefs both put their APIs behind expensive plans, and for *this
+site's own rankings* they largely duplicate Search Console, which reports actual
+positions rather than estimates and is free. Their real advantage is competitor
+and keyword-gap data, which no free API provides. Worth buying a seat and using
+their web UI if that's wanted — not worth wiring into this dashboard.
+
 ## Marketing sources
 
 Each platform reports as connected only when its credentials are present. See

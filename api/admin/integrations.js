@@ -19,6 +19,18 @@ const PLATFORMS = [
     effort: 'about 15 minutes, no approval needed',
   },
   {
+    id: 'pagespeed',
+    name: 'PageSpeed Insights',
+    metrics: 'Lighthouse SEO, performance, accessibility and Core Web Vitals per page',
+    env: ['PAGESPEED_API_KEY'],
+    steps: [
+      'In Google Cloud Console, enable the "PageSpeed Insights API"',
+      'Create an API key — it only reads public pages, so no OAuth is needed',
+      'Add PAGESPEED_API_KEY to the environment',
+    ],
+    effort: 'about 5 minutes, no approval; 25,000 requests a day free',
+  },
+  {
     id: 'youtube',
     name: 'YouTube',
     metrics: 'Views, watch time, subscribers, traffic sources',
