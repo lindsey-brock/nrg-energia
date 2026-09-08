@@ -6,8 +6,10 @@
 // the same structure the page generator consumes.
 
 const BLOCK_LABELS = {
-  it: { p: 'Paragrafo', quote: 'Citazione', rates: 'Percentuali', icons: 'Elenco con icone', figure: 'Immagine' },
-  en: { p: 'Paragraph', quote: 'Quote', rates: 'Rate cards', icons: 'Icon list', figure: 'Image' },
+  it: { p: 'Paragrafo', quote: 'Citazione', rates: 'Percentuali', icons: 'Elenco con icone',
+        figure: 'Immagine', callout: 'Box informativo', heading: 'Sottotitolo' },
+  en: { p: 'Paragraph', quote: 'Quote', rates: 'Rate cards', icons: 'Icon list',
+        figure: 'Image', callout: 'Callout box', heading: 'Sub-heading' },
 };
 
 const ICON_SVG = {
@@ -100,6 +102,23 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         });
         break;
       }
+      case 'heading': {
+        const level = [3, 4].includes(Number(block.level)) ? Number(block.level) : 3;
+        body = h('div', { class: 'heading-row' }, [
+          editable(`h${level}`, block.html, (v) => { block.html = v; }),
+          h('select', {
+            class: 'level-pick', title: 'Livello',
+            onchange: (e) => { block.level = Number(e.target.value); touch(); paint(); },
+          }, [3, 4].map((n) => h('option', { value: n, selected: n === level }, [`H${n}`]))),
+        ]);
+        break;
+      }
+      case 'callout':
+        body = h('div', { class: 'callout' }, [
+          h('div', { class: 'callout-icon' }, [block.icon || 'i']),
+          editable('p', block.html, (v) => { block.html = v; }),
+        ]);
+        break;
       case 'figure': {
         const id = post.inlineImage;
         body = h('figure', { class: 'article-inline-figure' }, [
@@ -107,6 +126,10 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
              : h('div', { class: 'img-empty' }, ['Trascina un’immagine qui']),
           editable('figcaption', langData.inlineCaption, (v) => { langData.inlineCaption = v; }),
         ]);
+        body.append(h('button', {
+          class: 'pick-btn',
+          onclick: () => openLibrary((publicId) => { post.inlineImage = publicId; touch(); paint(); }),
+        }, ['Scegli dalla libreria']));
         body.addEventListener('dragover', (e) => { e.preventDefault(); body.classList.add('drop'); });
         body.addEventListener('dragleave', () => body.classList.remove('drop'));
         body.addEventListener('drop', async (e) => {
@@ -168,16 +191,53 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     if (kind !== 'busy') setTimeout(() => uploadNotice.classList.remove('show'), 3500);
   }
 
+  // ── media library ─────────────────────────────────────────────────────────
+  async function openLibrary(pick) {
+    const overlay = h('div', { class: 'lib-overlay', onclick: (e) => { if (e.target === overlay) overlay.remove(); } });
+    const panel = h('div', { class: 'lib' }, [
+      h('div', { class: 'lib-head' }, [
+        h('strong', {}, ['Libreria immagini']),
+        h('button', { class: 'lib-close', onclick: () => overlay.remove() }, ['×']),
+      ]),
+    ]);
+    const grid = h('div', { class: 'lib-grid' }, [h('div', { class: 'lib-empty' }, ['Caricamento…'])]);
+    panel.append(grid);
+    overlay.append(panel);
+    document.body.append(overlay);
+
+    try {
+      const r = await fetch('/api/admin/media?limit=60').then((x) => x.json());
+      grid.innerHTML = '';
+      if (!r.configured) {
+        grid.append(h('div', { class: 'lib-empty' }, [
+          `Libreria non disponibile: mancano ${r.missing.join(', ')}.`,
+        ]));
+        return;
+      }
+      if (!r.images.length) { grid.append(h('div', { class: 'lib-empty' }, ['Nessuna immagine.'])); return; }
+      for (const im of r.images) {
+        grid.append(h('button', {
+          class: 'lib-item', title: im.publicId,
+          onclick: () => { pick(im.id); overlay.remove(); },
+        }, [h('img', { src: im.thumb, alt: '', loading: 'lazy' })]));
+      }
+    } catch (err) {
+      grid.innerHTML = '';
+      grid.append(h('div', { class: 'lib-empty' }, [err.message]));
+    }
+  }
+
   // ── add-block menu ────────────────────────────────────────────────────────
   function adder(section) {
     const menu = h('div', { class: 'add-row' });
     const make = (type) => {
-      if (type === 'p' || type === 'quote') return { type, html: '' };
+      if (type === 'p' || type === 'quote' || type === 'callout') return { type, html: '' };
+      if (type === 'heading') return { type, level: 3, html: '' };
       if (type === 'rates') return { type, items: [{ value: '50%', label: '' }, { value: '36%', label: '', variant: 'alt' }] };
       if (type === 'icons') return { type, items: [{ icon: 'panel', label: '' }, { icon: 'shield', label: '' }] };
       return { type: 'figure', position: 'inline' };
     };
-    for (const type of ['p', 'quote', 'rates', 'icons', 'figure']) {
+    for (const type of ['p', 'heading', 'quote', 'callout', 'rates', 'icons', 'figure']) {
       menu.append(h('button', {
         class: 'add-btn',
         onclick: () => { section.blocks.push(make(type)); touch(); paint(); },
@@ -192,7 +252,16 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     uploadNotice = h('div', { class: 'canvas-notice' });
     root.append(uploadNotice);
 
-    root.append(h('div', { class: 'canvas-label' }, ['Occhiello']));
+    root.append(h('div', { class: 'hero-row' }, [
+      h('div', { class: 'canvas-label', style: 'margin:0' }, ['Immagine di copertina']),
+      h('button', {
+        class: 'pick-btn',
+        onclick: () => openLibrary((publicId) => { post.image = publicId; touch(); paint(); }),
+      }, ['Scegli dalla libreria']),
+    ]));
+    root.append(h('img', { class: 'hero-thumb', src: cloudinary(post.image, 900), alt: '' }));
+
+    root.append(h('div', { class: 'canvas-label', style: 'margin-top:22px' }, ['Occhiello']));
     root.append(editable('p', langData.lead, (v) => { langData.lead = v; }, 'lead'));
 
     langData.sections.forEach((section, si) => {

@@ -64,9 +64,20 @@ CSS and is edited in place. Blocks (paragraph, quote, rate cards, icon list,
 image) can be added, reordered by dragging the handle, or deleted. Titles, slugs
 and SEO fields stay as form fields below the canvas.
 
+Blocks available: paragraph, sub-heading (H3/H4), pull quote, callout box,
+rate cards, icon list, image. The article title is the page's only H1 — one per
+page is what search engines expect — so body headings start at H2 (the section
+titles) with H3/H4 beneath.
+
+The sidebar is edited below the canvas: the table of contents generates itself
+from the section headings, the related service is a dropdown, and the regulatory
+references box takes `text | linked text | trailing text`. The contact card is
+fixed.
+
 Dropping an image onto a figure replaces it; dropping onto empty canvas replaces
 the hero image. Uploads are signed server-side so the Cloudinary secret never
-reaches the browser:
+reaches the browser. "Scegli dalla libreria" lists what is already in the
+Cloudinary account, so existing site photos can be reused without re-uploading:
 
 | Variable | Purpose |
 |---|---|

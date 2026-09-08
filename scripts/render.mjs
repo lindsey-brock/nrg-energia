@@ -52,6 +52,18 @@ function renderBlock(block, post, lang) {
       return `        <p>${block.html}</p>`;
     case 'quote':
       return `        <blockquote class="pull-quote">${block.html}</blockquote>`;
+    case 'heading': {
+      const level = [3, 4].includes(Number(block.level)) ? Number(block.level) : 3;
+      const id = block.id ? ` id="${block.id}"` : '';
+      return `        <h${level}${id}>${block.html}</h${level}>`;
+    }
+    case 'callout':
+      return [
+        '        <div class="callout">',
+        `          <div class="callout-icon">${block.icon || 'i'}</div>`,
+        `          <p>${block.html}</p>`,
+        '        </div>',
+      ].join('\n');
     case 'rates':
       return [
         '        <div class="rate-grid">',

@@ -59,6 +59,31 @@
     .lang-switch button { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; border:none;
       background:none; color:var(--text-mid); padding:6px 16px; border-radius:50px; cursor:pointer; }
     .lang-switch button.active { background:var(--green-dark); color:#fff; }
+    .heading-row { display:flex; align-items:baseline; gap:10px; }
+    .heading-row > :first-child { flex:1; }
+    .level-pick { font-family:'DM Sans',sans-serif; font-size:11px; border:1px solid var(--warm-gray);
+                  background:var(--white); border-radius:5px; padding:2px 5px; color:var(--text-light); cursor:pointer; }
+    .hero-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px; }
+    .hero-thumb { width:100%; aspect-ratio:16/7; object-fit:cover; border-radius:var(--radius-sm);
+                  display:block; background:var(--off-white); }
+    .pick-btn { font-family:'DM Sans',sans-serif; font-size:11.5px; background:var(--white);
+                border:1px solid var(--warm-gray); color:var(--text-mid); border-radius:50px;
+                padding:5px 12px; cursor:pointer; margin-top:8px; }
+    .pick-btn:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
+    .lib-overlay { position:fixed; inset:0; background:rgba(10,25,18,.6); z-index:100;
+                   display:flex; align-items:center; justify-content:center; padding:24px; }
+    .lib { background:var(--white); border-radius:var(--radius); width:100%; max-width:760px;
+           max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+    .lib-head { display:flex; justify-content:space-between; align-items:center; padding:16px 20px;
+                border-bottom:1px solid var(--warm-gray); font-family:'Syne',sans-serif; }
+    .lib-close { background:none; border:none; font-size:22px; line-height:1; cursor:pointer; color:var(--text-light); }
+    .lib-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px;
+                padding:18px 20px; overflow-y:auto; }
+    .lib-item { border:1px solid var(--warm-gray); border-radius:var(--radius-sm); overflow:hidden;
+                background:none; padding:0; cursor:pointer; aspect-ratio:3/2; }
+    .lib-item:hover { border-color:var(--green-mid); box-shadow:0 4px 14px rgba(0,0,0,.1); }
+    .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
+    .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
     .canvas-cols { display:grid; grid-template-columns:1fr; gap:18px; }
     @media (max-width:900px) { .canvas { padding:20px 18px 24px; } }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -426,15 +451,32 @@ function openPostEditor(post) {
     col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; }, 'textarea'));
     col.append(field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; }));
     col.append(field('Data', draft[code].dateLabel, (v) => { draft[code].dateLabel = v; dirty = true; }));
+    col.append(field('Riferimenti normativi (testo | link | coda)',
+      draft.references?.[code] ?? '', (v) => {
+        draft.references = draft.references || {}; draft.references[code] = v; dirty = true;
+      }));
     metaCols.append(col);
   }
   metaCard.append(metaCols);
+
+  const sidebarCard = el('div', { class: 'card' }, [
+    el('h3', { html: 'Barra laterale' }),
+    el('p', { class: 'meta', style: 'margin-bottom:12px',
+      html: 'L’indice si genera dai titoli delle sezioni. Il riquadro contatti è fisso.' }),
+  ]);
+  sidebarCard.append(el('div', { class: 'row-2' }, [
+    field('Servizio collegato', draft.service, (v) => { draft.service = v; dirty = true; },
+      'select', ['energie-rinnovabili', 'coperture', 'bonifica-amianto']),
+    field('Link riferimenti normativi', draft.references?.url ?? '', (v) => {
+      draft.references = draft.references || {}; draft.references.url = v; dirty = true;
+    }),
+  ]));
 
   const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
   saveBtn.disabled = true;
   const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
 
-  work.append(metaCard, el('div', { class: 'editor-foot' }, [
+  work.append(metaCard, sidebarCard, el('div', { class: 'editor-foot' }, [
     saveBtn, translateBtn,
     el('button', { class: 'btn btn-ghost', onclick: () => { if (confirmLeave()) render(); } }, ['Annulla']),
   ]));
