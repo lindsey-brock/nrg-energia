@@ -314,40 +314,88 @@
   }
 
   @media (max-width: 600px) { .services-grid, .process-grid, .certs-grid { grid-template-columns: 1fr; } .stats-inner { grid-template-columns: 1fr 1fr; } .stat-item { border-right: none; border-bottom: 1px solid var(--warm-gray); } .footer-grid { grid-template-columns: 1fr; gap: 32px; } .page-nav-link { padding: 16px 14px; font-size: 14px; } }
-/* MODAL */
-.modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 2000; background: rgba(10,30,18,0.7); backdrop-filter: blur(6px); align-items: center; justify-content: center; padding: 20px; }
-.modal-overlay.open { display: flex !important; }
-.modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; box-shadow: 0 24px 64px rgba(0,0,0,0.18); animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both; }
-@keyframes modalIn { from { opacity:0; transform: translateY(20px) scale(0.97); } to { opacity:1; transform: none; } }
-.modal-header { padding: 28px 32px 0; display: flex; justify-content: space-between; align-items: flex-start; }
-.modal-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 6px; }
-.modal-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; line-height: 1.2; }
-.modal-close { background: var(--warm-gray); border: none; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--text-mid); transition: background 0.2s; flex-shrink: 0; margin-left: 16px; }
-.modal-close:hover { background: var(--green-pale); color: var(--green-dark); }
-.modal-body { padding: 24px 32px 32px; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.form-group { display: flex; flex-direction: column; margin-bottom: 14px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-.req { color: var(--green-mid); margin-left: 2px; }
-.form-input, .form-select, .form-textarea { background: var(--off-white); border: 1.5px solid var(--warm-gray); border-radius: 8px; padding: 11px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text-dark); transition: border-color 0.2s, box-shadow 0.2s; outline: none; width: 100%; }
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,122,74,0.12); }
-.form-input.error, .form-select.error { border-color: #e05252; }
-.form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
-.form-textarea { resize: vertical; min-height: 90px; }
-.form-file-label { display: flex; align-items: center; gap: 10px; padding: 11px 14px; background: var(--off-white); border: 1.5px dashed var(--warm-gray); border-radius: 8px; cursor: pointer; transition: border-color 0.2s, background 0.2s; font-size: 13px; color: var(--text-light); }
-.form-file-label:hover { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-dark); }
-.form-file-input { display: none; }
-.file-name { font-size: 12px; color: var(--green-mid); margin-top: 5px; }
-.form-error-msg { font-size: 12px; color: #e05252; margin-top: 4px; display: none; }
-.form-error-msg.show { display: block; }
-.form-divider { border: none; border-top: 1px solid var(--warm-gray); margin: 20px 0; }
-.modal-submit { width: 100%; background: var(--green-dark); color: var(--white); border: none; border-radius: 50px; padding: 15px 32px; font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background 0.2s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px; }
-.modal-submit:hover { background: var(--green-mid); transform: translateY(-1px); }
-.modal-success { display: none; text-align: center; padding: 48px 32px; }
-.modal-success.show { display: block; }
-.modal-success-icon { font-size: 48px; margin-bottom: 16px; }
-.modal-success h3 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; }
-.modal-success p { font-size: 15px; color: var(--text-mid); }
+  /* ── MODAL ─────────────────────────────────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 2000;
+    background: rgba(10,30,18,0.7); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--white); border-radius: 16px; width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+    animation: modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes modalIn { from { opacity:0; transform: translateY(20px) scale(0.97); } to { opacity:1; transform: none; } }
+  .modal-header {
+    padding: 28px 32px 0; display: flex; justify-content: space-between; align-items: flex-start;
+  }
+  .modal-header-text {}
+  .modal-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--green-mid); margin-bottom: 6px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--text-dark); letter-spacing: -0.5px; line-height: 1.2; }
+  .modal-close {
+    background: var(--warm-gray); border: none; width: 36px; height: 36px;
+    border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: var(--text-mid); transition: background 0.2s; flex-shrink: 0; margin-left: 16px;
+  }
+  .modal-close:hover { background: var(--green-pale); color: var(--green-dark); }
+  .modal-body { padding: 24px 32px 32px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group { display: flex; flex-direction: column; margin-bottom: 14px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-label {
+    font-size: 12px; font-weight: 600; color: var(--text-mid); text-transform: uppercase;
+    letter-spacing: 0.8px; margin-bottom: 6px;
+  }
+  .form-label .req { color: var(--green-mid); margin-left: 2px; }
+  .form-input, .form-select, .form-textarea {
+    background: var(--off-white); border: 1.5px solid var(--warm-gray);
+    border-radius: 8px; padding: 11px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif;
+    color: var(--text-dark); transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    width: 100%;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--green-mid); box-shadow: 0 0 0 3px rgba(45,122,74,0.12);
+  }
+  .form-input.error, .form-select.error { border-color: #e05252; }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888880' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+  .form-textarea { resize: vertical; min-height: 90px; }
+  .form-file-label {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+    background: var(--off-white); border: 1.5px dashed var(--warm-gray);
+    border-radius: 8px; cursor: pointer; transition: border-color 0.2s, background 0.2s;
+    font-size: 13px; color: var(--text-light);
+  }
+  .form-file-label:hover { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-dark); }
+  .form-file-label.drag-over { border-color: var(--green-mid); background: var(--green-pale); color: var(--green-dark); border-style: solid; }
+  .form-file-label svg { flex-shrink: 0; }
+  .form-file-input { display: none; }
+  .file-name { font-size: 12px; color: var(--green-mid); margin-top: 5px; }
+  .form-error-msg { font-size: 12px; color: #e05252; margin-top: 4px; display: none; }
+  .form-error-msg.show { display: block; }
+  .form-divider { border: none; border-top: 1px solid var(--warm-gray); margin: 20px 0; }
+  .modal-submit {
+    width: 100%; background: var(--green-dark); color: var(--white);
+    border: none; border-radius: 50px; padding: 15px 32px;
+    font-size: 15px; font-weight: 600; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: background 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 8px;
+  }
+  .modal-submit:hover { background: var(--green-mid); transform: translateY(-1px); }
+  .modal-success {
+    display: none; text-align: center; padding: 48px 32px;
+  }
+  .modal-success.show { display: block; }
+  .modal-success-icon {
+    width: 56px; height: 56px; margin: 0 auto 20px; border-radius: 50%;
+    animation: modalSuccessScaleIn 0.5s ease both, modalSuccessCycleColor 3s ease-in-out infinite 0.5s;
+  }
+  @keyframes modalSuccessScaleIn { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes modalSuccessCycleColor { 0%,28% { background: #f5c842; } 33%,61% { background: #1a73e8; } 66%,94% { background: #1a4d2e; } 100% { background: #f5c842; } }
+  .modal-success h3 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--text-dark); margin-bottom: 8px; }
+  .modal-success p { font-size: 15px; color: var(--text-mid); }
+
 /* WHATSAPP */
 .whatsapp-float { position: fixed; bottom: 28px; right: 28px; z-index: 999; }
 .whatsapp-btn { width: 56px; height: 56px; border-radius: 50%; background: #25D366; color: var(--white); display: flex; align-items: center; justify-content: center; text-decoration: none; box-shadow: 0 4px 16px rgba(37,211,102,0.4); transition: transform 0.2s; font-size: 26px; }
@@ -429,7 +477,7 @@
     <a href="../../index?lang=en#servizi" class="active">Services</a>
     <a href="portfolio">Portfolio</a>
     <a href="../../coming-soon">About us</a>
-    <a href="../../coming-soon">News &amp; Blog</a>
+    <a href="blog">News &amp; Blog</a>
     <a href="#contatti">Contact</a>
     <a href="#" onclick="openModal(); return false;" class="nav-cta">Get a quote</a>
     <a href="../../services/energie-rinnovabili" class="lang-toggle">🇮🇹 IT</a>
@@ -443,7 +491,7 @@
   <a href="../../index?lang=en#servizi">Services</a>
   <a href="portfolio">Portfolio</a>
   <a href="../../coming-soon">About us</a>
-  <a href="../../coming-soon">News &amp; Blog</a>
+  <a href="blog">News &amp; Blog</a>
   <a href="#contatti">Contact</a>
   <a href="#" onclick="openModal(); closeMobileMenu(); return false;" class="mobile-cta">Get a quote</a>
   <a href="../../services/energie-rinnovabili" class="mobile-menu-lang"><span>🇮🇹</span>&nbsp;IT</a>
@@ -678,7 +726,7 @@
       <div class="footer-col"><h4>Company</h4><ul>
         <li><a href="../../coming-soon">About us</a></li>
         <li><a href="portfolio">Portfolio</a></li>
-        <li><a href="../../coming-soon">News &amp; Blog</a></li>
+        <li><a href="blog">News &amp; Blog</a></li>
         <li><a href="#contatti">Contact</a></li>
       </ul></div>
       <div class="footer-col footer-contact"><h4>Contact</h4>
@@ -716,14 +764,18 @@
     </svg>
   </a>
 </div>
-  <!-- ── QUOTE MODAL ──────────────────────────────────────────────────────────── -->
+<!-- ── QUOTE MODAL ─────────────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="quoteModal" onclick="handleOverlayClick(event)">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+    <!-- Success state -->
     <div class="modal-success" id="modalSuccess">
-      <div class="modal-success-icon">✅</div>
+      <div class="modal-success-icon"></div>
       <h3 id="successTitle">Richiesta inviata!</h3>
-      <p id="successMsg">Ti risponderemo entro 24 ore.</p>
+      <p id="successMsg">Riceverai una risposta a breve.</p>
     </div>
+
+    <!-- Form state -->
     <div id="modalForm">
       <div class="modal-header">
         <div class="modal-header-text">
@@ -732,7 +784,9 @@
         </div>
         <button class="modal-close" onclick="closeModal()" aria-label="Chiudi">✕</button>
       </div>
+
       <div class="modal-body">
+        <!-- Service selector -->
         <div class="form-group">
           <label class="form-label" for="serviceSelect" id="labelService">Tipo di richiesta <span class="req">*</span></label>
           <select class="form-select" id="serviceSelect" required>
@@ -742,9 +796,12 @@
             <option value="coperture"  id="opt3">Coperture</option>
             <option value="amianto"    id="opt4">Bonifica amianto</option>
           </select>
-          <span class="form-error-msg" id="errService">Seleziona un servizio</span>
+          <span class="form-error-msg" id="errService" id="errService">Seleziona un servizio</span>
         </div>
+
         <hr class="form-divider">
+
+        <!-- Name + Phone -->
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="inputName" id="labelName">Nome e cognome <span class="req">*</span></label>
@@ -757,32 +814,43 @@
             <span class="form-error-msg" id="errPhone">Campo obbligatorio</span>
           </div>
         </div>
+
+        <!-- Email -->
         <div class="form-group">
           <label class="form-label" for="inputEmail" id="labelEmail">Email <span class="req">*</span></label>
           <input class="form-input" type="email" id="inputEmail" placeholder="mario@esempio.it" required>
           <span class="form-error-msg" id="errEmail">Inserisci un'email valida</span>
         </div>
+
+        <!-- Message -->
         <div class="form-group">
           <label class="form-label" for="inputMessage" id="labelMessage">Messaggio <span style="color:var(--text-light);font-weight:400;text-transform:none;letter-spacing:0" id="labelOptional">(opzionale)</span></label>
           <textarea class="form-textarea" id="inputMessage" placeholder="Descrivi brevemente il tuo progetto…"></textarea>
         </div>
+
+        <!-- File upload -->
         <div class="form-group">
           <label class="form-label" id="labelFile">Allegato <span style="color:var(--text-light);font-weight:400;text-transform:none;letter-spacing:0" id="labelOptional2">(opzionale)</span></label>
-          <label class="form-file-label" for="inputFile">
+          <label class="form-file-label" for="inputFile" id="fileDropZone" ondragover="handleFileDragOver(event)" ondragleave="handleFileDragLeave(event)" ondrop="handleFileDrop(event)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span id="fileLabel">Carica un file (PDF, JPG, PNG — max 10 MB)</span>
           </label>
           <input class="form-file-input" type="file" id="inputFile" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this)">
           <span class="file-name" id="fileName"></span>
+          <span class="form-error-msg" id="errFile">File troppo grande! Il limite massimo è 10MB.</span>
         </div>
-        <button class="modal-submit" onclick="submitForm()">
+
+        <div id="modalSubmitError" style="display:none;margin-bottom:14px;padding:10px 14px;background:#fdecec;border:1px solid #e05252;border-radius:8px;color:#a83232;font-size:13px;"></div>
+
+        <button class="modal-submit" onclick="submitForm()" id="submitBtn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 20-7z"/></svg>
           <span id="submitLabel">Invia richiesta</span>
         </button>
       </div>
-    </div>
+    </div><!-- /modalForm -->
   </div>
 </div>
+
 <script>
   (function() {
     const links = document.querySelectorAll('.page-nav-link[data-target]');
@@ -808,6 +876,7 @@
   })();
   var LANG = 'en'; // ← change to 'en' on the 4 EN pages
 
+// ── MODAL ────────────────────────────────────────────────────────────────────
 var MODAL_T = {
   it: {
     eyebrow:'Preventivo gratuito', title:'Raccontaci il tuo progetto',
@@ -819,7 +888,10 @@ var MODAL_T = {
     submitLabel:'Invia richiesta',
     errService:'Seleziona un servizio', errName:'Campo obbligatorio',
     errPhone:'Campo obbligatorio', errEmail:"Inserisci un'email valida",
-    successTitle:'Richiesta inviata!', successMsg:'Ti risponderemo entro 24 ore.',
+    errFile:'File troppo grande! Il limite massimo è 10MB.',
+    successTitle:'Richiesta inviata!', successMsg:'Riceverai una risposta a breve.',
+    submitError:"Si è verificato un errore nell'invio. Riprova più tardi.",
+    sendingLabel:'Invio in corso…',
     namePlaceholder:'Mario Rossi', phonePlaceholder:'+39 333 000 0000',
     emailPlaceholder:'mario@esempio.it', msgPlaceholder:'Descrivi brevemente il tuo progetto…'
   },
@@ -833,7 +905,10 @@ var MODAL_T = {
     submitLabel:'Send request',
     errService:'Please select a service', errName:'Required field',
     errPhone:'Required field', errEmail:'Please enter a valid email',
-    successTitle:'Request sent!', successMsg:"We'll get back to you within 24 hours.",
+    errFile:'File is too large! Maximum limit is 10MB.',
+    successTitle:'Request sent!', successMsg:"You'll hear back from us shortly.",
+    submitError:'Something went wrong while sending. Please try again later.',
+    sendingLabel:'Sending…',
     namePlaceholder:'John Smith', phonePlaceholder:'+39 333 000 0000',
     emailPlaceholder:'john@example.com', msgPlaceholder:'Briefly describe your project…'
   }
@@ -845,67 +920,235 @@ function openModal() {
   document.getElementById('modalForm').style.display = '';
   document.getElementById('modalSuccess').classList.remove('show');
   clearModalErrors();
+  hideSubmitError();
   updateModalLang();
 }
+
+function hideSubmitError() {
+  var el = document.getElementById('modalSubmitError');
+  el.style.display = 'none';
+  el.textContent = '';
+}
+
+function showSubmitError(msg) {
+  var el = document.getElementById('modalSubmitError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
 function closeModal() {
   document.getElementById('quoteModal').classList.remove('open');
   document.body.style.overflow = '';
 }
+
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('quoteModal')) closeModal();
 }
-document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
 
 function updateModalLang() {
-  var t = MODAL_T[LANG];
+  var t = MODAL_T[typeof LANG !== 'undefined' ? LANG : 'it'];
   function setT(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
   function setP(id, val) { var el = document.getElementById(id); if (el) el.placeholder = val; }
-  setT('modalEyebrow', t.eyebrow); setT('modalTitle', t.title);
+  setT('modalEyebrow', t.eyebrow);
+  setT('modalTitle', t.title);
+  // labels with required star
   var lbl;
   lbl = document.getElementById('labelService'); if(lbl){ lbl.childNodes[0].textContent = t.labelService+' '; }
   lbl = document.getElementById('labelName');    if(lbl){ lbl.childNodes[0].textContent = t.labelName+' '; }
   lbl = document.getElementById('labelPhone');   if(lbl){ lbl.childNodes[0].textContent = t.labelPhone+' '; }
   lbl = document.getElementById('labelEmail');   if(lbl){ lbl.childNodes[0].textContent = t.labelEmail+' '; }
-  setT('labelMessage', t.labelMessage); setT('labelOptional', t.labelOptional); setT('labelOptional2', t.labelOptional2);
-  setT('labelFile', t.labelFile); setT('fileLabel', t.fileLabel); setT('submitLabel', t.submitLabel);
-  setT('errService', t.errService); setT('errName', t.errName); setT('errPhone', t.errPhone); setT('errEmail', t.errEmail);
+  setT('labelMessage', t.labelMessage);
+  setT('labelOptional', t.labelOptional);
+  setT('labelOptional2', t.labelOptional2);
+  setT('labelFile', t.labelFile);
+  setT('fileLabel', t.fileLabel);
+  setT('submitLabel', t.submitLabel);
+  setT('errService', t.errService);
+  setT('errName', t.errName);
+  setT('errPhone', t.errPhone);
+  setT('errEmail', t.errEmail);
+  setT('errFile', t.errFile);
   setT('opt1', t.opt1); setT('opt2', t.opt2); setT('opt3', t.opt3); setT('opt4', t.opt4);
   var ph = document.getElementById('optPlaceholder'); if(ph) ph.textContent = t.optPlaceholder;
-  setP('inputName', t.namePlaceholder); setP('inputPhone', t.phonePlaceholder);
-  setP('inputEmail', t.emailPlaceholder); setP('inputMessage', t.msgPlaceholder);
+  setP('inputName', t.namePlaceholder);
+  setP('inputPhone', t.phonePlaceholder);
+  setP('inputEmail', t.emailPlaceholder);
+  setP('inputMessage', t.msgPlaceholder);
 }
+
+var selectedFile = null;
+var FILE_MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+
 function handleFile(input) {
-  var name = input.files && input.files[0] ? input.files[0].name : '';
-  document.getElementById('fileName').textContent = name;
+  acceptFile(input.files && input.files[0] ? input.files[0] : null, input);
 }
+
+function acceptFile(file, input) {
+  var errFile = document.getElementById('errFile');
+
+  if (file && file.size > FILE_MAX_BYTES) {
+    errFile.classList.add('show');
+    if (input) input.value = '';
+    selectedFile = null;
+    document.getElementById('fileName').textContent = '';
+    return;
+  }
+
+  errFile.classList.remove('show');
+  selectedFile = file;
+  document.getElementById('fileName').textContent = selectedFile ? selectedFile.name : '';
+}
+
+function handleFileDragOver(e) {
+  e.preventDefault();
+  document.getElementById('fileDropZone').classList.add('drag-over');
+}
+
+function handleFileDragLeave(e) {
+  e.preventDefault();
+  document.getElementById('fileDropZone').classList.remove('drag-over');
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('fileDropZone').classList.remove('drag-over');
+  var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0] ? e.dataTransfer.files[0] : null;
+  if (!file) return;
+
+  var inputFile = document.getElementById('inputFile');
+  try {
+    var dt = new DataTransfer();
+    dt.items.add(file);
+    inputFile.files = dt.files;
+  } catch (err) {
+    // DataTransfer construction unsupported; selectedFile is still set below
+  }
+  acceptFile(file, inputFile);
+}
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function() {
+      var result = reader.result; // data:<mime>;base64,<data>
+      var base64 = result.substring(result.indexOf(',') + 1);
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function clearModalErrors() {
   ['serviceSelect','inputName','inputPhone','inputEmail'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.classList.remove('error');
   });
-  ['errService','errName','errPhone','errEmail'].forEach(function(id) {
+  ['errService','errName','errPhone','errEmail','errFile'].forEach(function(id) {
     var el = document.getElementById(id); if (el) el.classList.remove('show');
   });
 }
+
 function submitForm() {
-  var t = MODAL_T[LANG];
+  var t = MODAL_T[typeof LANG !== 'undefined' ? LANG : 'it'];
   clearModalErrors();
+  hideSubmitError();
   var valid = true;
   var service = document.getElementById('serviceSelect');
   var name    = document.getElementById('inputName');
   var phone   = document.getElementById('inputPhone');
   var email   = document.getElementById('inputEmail');
-  if (!service.value) { service.classList.add('error'); document.getElementById('errService').classList.add('show'); valid = false; }
-  if (!name.value.trim()) { name.classList.add('error'); document.getElementById('errName').classList.add('show'); valid = false; }
-  if (!phone.value.trim()) { phone.classList.add('error'); document.getElementById('errPhone').classList.add('show'); valid = false; }
+  var message = document.getElementById('inputMessage');
+
+  if (!service.value) {
+    service.classList.add('error');
+    document.getElementById('errService').classList.add('show');
+    valid = false;
+  }
+  if (!name.value.trim()) {
+    name.classList.add('error');
+    document.getElementById('errName').classList.add('show');
+    valid = false;
+  }
+  if (!phone.value.trim()) {
+    phone.classList.add('error');
+    document.getElementById('errPhone').classList.add('show');
+    valid = false;
+  }
+  var fileInputEl = document.getElementById('inputFile');
+  var currentFile = fileInputEl.files && fileInputEl.files[0] ? fileInputEl.files[0] : null;
+  if (currentFile && currentFile.size > FILE_MAX_BYTES) {
+    document.getElementById('errFile').classList.add('show');
+    valid = false;
+  }
   var emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRe.test(email.value.trim())) { email.classList.add('error'); document.getElementById('errEmail').classList.add('show'); valid = false; }
+  if (!emailRe.test(email.value.trim())) {
+    email.classList.add('error');
+    document.getElementById('errEmail').classList.add('show');
+    valid = false;
+  }
   if (!valid) return;
-  document.getElementById('modalForm').style.display = 'none';
-  var suc = document.getElementById('modalSuccess');
-  suc.classList.add('show');
-  document.getElementById('successTitle').textContent = t.successTitle;
-  document.getElementById('successMsg').textContent   = t.successMsg;
-  setTimeout(closeModal, 3000);
+
+  var submitBtn   = document.getElementById('submitBtn');
+  var submitLabel = document.getElementById('submitLabel');
+  submitBtn.disabled = true;
+  submitLabel.textContent = t.sendingLabel;
+
+  Promise.resolve(selectedFile ? fileToBase64(selectedFile) : null)
+    .then(function(base64) {
+      var payload = {
+        tipo:      service.options[service.selectedIndex].text,
+        nome:      name.value.trim(),
+        email:     email.value.trim(),
+        telefono:  phone.value.trim(),
+        messaggio: message.value.trim()
+      };
+      if (selectedFile && base64) {
+        payload.attachment = { name: selectedFile.name, content: base64 };
+      }
+      return fetch('/api/contact', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+      });
+    })
+    .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+    .then(function(result) {
+      submitBtn.disabled = false;
+      submitLabel.textContent = t.submitLabel;
+      if (!result.ok || !result.data.success) {
+        showSubmitError((result.data && result.data.error) || t.submitError);
+        return;
+      }
+      document.getElementById('modalForm').style.display = 'none';
+      var suc = document.getElementById('modalSuccess');
+      suc.classList.add('show');
+      document.getElementById('successTitle').textContent = t.successTitle;
+      document.getElementById('successMsg').textContent   = t.successMsg;
+      resetQuoteForm();
+      setTimeout(closeModal, 3000);
+    })
+    .catch(function() {
+      submitBtn.disabled = false;
+      submitLabel.textContent = t.submitLabel;
+      showSubmitError(t.submitError);
+    });
+}
+
+function resetQuoteForm() {
+  document.getElementById('serviceSelect').value = '';
+  document.getElementById('inputName').value = '';
+  document.getElementById('inputPhone').value = '';
+  document.getElementById('inputEmail').value = '';
+  document.getElementById('inputMessage').value = '';
+  document.getElementById('inputFile').value = '';
+  document.getElementById('fileName').textContent = '';
+  selectedFile = null;
+  clearModalErrors();
+  hideSubmitError();
 }
 
 // Page nav scroll highlight
