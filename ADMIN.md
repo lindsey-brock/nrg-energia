@@ -208,3 +208,36 @@ references across 25 files, all handled by the rewrite step. No image URLs need
 rebuilding by hand.
 
 Keep the old account alive until the new URLs are live, then retire it.
+
+## Canonical, hreflang and Open Graph
+
+`scripts/seo-meta.mjs` holds the canonical domain, the IT/EN page pairs and the
+Open Graph card builders. Two consumers:
+
+| | Owns |
+|---|---|
+| `npm run seo:meta` | the hand-written pages — homepage, portfolio, 8 service pages |
+| `npm run build:blog` | the generated blog pages, via `render.mjs` |
+
+They never touch the same file. Re-running replaces the block between
+`<!-- seo:start -->` and `<!-- seo:end -->` rather than duplicating it.
+
+### Open Graph images
+
+Composed by Cloudinary at delivery time — no files to generate or store. Change
+a title and the card changes with it.
+
+- **Blog posts** — the post's own image, darkened, with its title and meta
+  description overlaid
+- **Homepage and pages without a photo** — a brand card: wordmark, tagline and
+  office hours, in the language being shared
+- **Section pages** — that page's hero photo with the section name
+
+Two encoding rules the hard way: `l_one_pixel` is not an asset in this account
+so a scrim layer 400s — `e_colorize` is used instead; and commas must be
+double-encoded as `%252C`, since `encodeURIComponent` yields `%2C` and
+Cloudinary decodes the path once more before parsing transformations.
+
+The logo mark itself is not on the brand card: it is an SVG in the repo, not a
+Cloudinary asset, and uploading it needs API credentials. Once it is uploaded,
+adding it is one extra layer in `brandCard()`.

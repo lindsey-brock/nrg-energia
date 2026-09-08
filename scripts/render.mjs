@@ -1,4 +1,5 @@
 // Renders the blog HTML from content/posts.json.
+import { metaBlock, photoCard, brandCard } from './seo-meta.mjs';
 // Used by scripts/build.mjs (CLI) and api/admin/publish.js (admin dashboard).
 
 const CLOUD = (typeof process !== 'undefined' && process.env?.CLOUDINARY_CLOUD_NAME) || 'dmegrbq5k';
@@ -36,6 +37,41 @@ const ICONS = {
 };
 
 const tagClass = (category) => (category === 'coperture' ? ' blue' : '');
+
+// ── SEO head block ───────────────────────────────────────────────────────────
+const OG_ALT = {
+  it: (post) => `/blog/${post.it.slug}`,
+  en: (post) => `/services/en/blog/${post.en.slug}`,
+};
+
+function articleSeo(post, lang) {
+  const L = post[lang];
+  const self = OG_ALT[lang](post);
+  return metaBlock({
+    lang, self,
+    alt: { it: OG_ALT.it(post), en: OG_ALT.en(post) },
+    title: L.title, description: L.metaDescription,
+    // the post's own photo, with its title and description composed on top
+    ogImage: photoCard(post.image, L.title, L.metaDescription),
+    type: 'article',
+  });
+}
+
+function indexSeo(lang) {
+  const self = lang === 'it' ? '/blog' : '/services/en/blog';
+  const copy = lang === 'it'
+    ? { title: 'News & Blog — NRG Energia',
+        description: 'Approfondimenti su incentivi fiscali, fotovoltaico, coperture e sicurezza in quota dal team di NRG Energia.',
+        tagline: 'News & Blog' }
+    : { title: 'News & Blog — NRG Energia',
+        description: 'Insights on tax incentives, solar power, roofing and working at height from the NRG Energia team.',
+        tagline: 'News & Blog' };
+  return metaBlock({
+    lang, self, alt: { it: '/blog', en: '/services/en/blog' },
+    title: copy.title, description: copy.description,
+    ogImage: brandCard(lang, copy.tagline),
+  });
+}
 
 /** URL of a post, relative to the page doing the linking. */
 export function postUrl(post, lang, from) {
@@ -214,7 +250,9 @@ export function renderIndex(template, posts, lang) {
       + rest.map((p) => renderCard(p, lang)).join('\n') + '\n    </div>';
   }
   const altHref = lang === 'it' ? 'services/en/blog' : '../../blog';
-  return template.replace('{{CARDS}}', cards).replace(/\{\{ALT_HREF\}\}/g, altHref);
+  return template.replace('{{CARDS}}', cards)
+    .replace('{{SEO_META}}', indexSeo(lang))
+    .replace(/\{\{ALT_HREF\}\}/g, altHref);
 }
 
 export function renderArticle(template, post, posts, lang) {
@@ -236,6 +274,7 @@ export function renderArticle(template, post, posts, lang) {
   const plainTitle = L.title.replace(/&mdash;/g, '-');
 
   return template
+    .replace('{{SEO_META}}', articleSeo(post, lang))
     .replace('{{TITLE}}', `${plainTitle} &mdash; NRG Energia`)
     .replace('{{META_DESCRIPTION}}', L.metaDescription)
     .replace(/\{\{ALT_HREF\}\}/g, altHref)

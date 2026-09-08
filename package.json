@@ -12,6 +12,8 @@
     "check:blog": "node scripts/build.mjs --check",
     "cloudinary:list": "node scripts/migrate-cloudinary.mjs --dry-run",
     "cloudinary:copy": "node scripts/migrate-cloudinary.mjs --copy",
-    "cloudinary:rewrite": "node scripts/migrate-cloudinary.mjs --rewrite"
+    "cloudinary:rewrite": "node scripts/migrate-cloudinary.mjs --rewrite",
+    "seo:meta": "node scripts/add-seo-meta.mjs",
+    "seo:check": "node scripts/add-seo-meta.mjs --check"
   }
 }
