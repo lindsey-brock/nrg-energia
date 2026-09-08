@@ -113,6 +113,31 @@ accessibility, Core Web Vitals) against a public URL. Free, but it needs
 `PAGESPEED_API_KEY` — the keyless quota is shared across all anonymous callers
 and is permanently exhausted.
 
+### Competitor research
+
+"Analisi di un concorrente" fetches any public page and reports how it is built:
+title and description lengths, heading structure with their actual H2s, word
+count, image alt coverage, internal link count, structured data, canonical and
+hreflang. Comparing a competitor's service page with the equivalent page here
+covers most of what a paid audit gives a site this size, and costs nothing.
+
+The endpoint fetches a user-supplied URL, so it validates the target first:
+http/https only, DNS resolved and checked against private and link-local ranges,
+12-second timeout, 1.5MB cap, HTML content types only.
+
+What it deliberately does not do is rank tracking or backlink data. Neither is
+available free, and estimating them would be worse than leaving them out.
+
+Free options worth knowing, none of them API-accessible:
+
+| Tool | Free allowance |
+|---|---|
+| SEMrush / Ubersuggest / Moz | a handful of competitor domain lookups a day, web UI only |
+| Ahrefs Webmaster Tools | full backlink and keyword data, but only for sites you verify |
+| Bing Webmaster Tools | keyword research with real volumes, free, and it has an API |
+| Google Keyword Planner | free with a Google Ads account; volumes are bucketed without spend |
+| Google Trends | relative interest and term comparison, free |
+
 ### On paid SEO tools
 
 SEMrush and Ahrefs both put their APIs behind expensive plans, and for *this

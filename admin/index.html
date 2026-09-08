@@ -802,6 +802,50 @@ VIEWS.seo = async (root) => {
       body.append(card);
     }
 
+    // ── competitor page analysis (free, no third-party API) ──────────────
+    const comp = el('div', { class: 'card' }, [
+      el('h3', { html: 'Analisi di un concorrente' }),
+      el('p', { class: 'meta', style: 'margin-top:4px',
+        html: 'Legge una pagina pubblica e mostra come è impostata: titolo, description, struttura dei titoli, lunghezza, dati strutturati. Nessun servizio a pagamento.' }),
+    ]);
+    const compIn = el('input', { class: 'f', type: 'url', placeholder: 'https://concorrente.it/servizio', style: 'margin-top:12px' });
+    const compBtn = el('button', { class: 'btn btn-ghost btn-sm', style: 'margin-top:10px' }, ['Analizza pagina']);
+    const compOut = el('div', { style: 'margin-top:14px' });
+    comp.append(compIn, compBtn, compOut);
+    body.append(comp);
+
+    compBtn.addEventListener('click', async () => {
+      if (!compIn.value) return;
+      compBtn.disabled = true; compBtn.innerHTML = '<span class="spinner"></span> Analisi…';
+      compOut.innerHTML = '';
+      try {
+        const r = await api(`competitor?url=${encodeURIComponent(compIn.value)}`);
+        if (r.error) { compOut.append(el('div', { class: 'msg err show', html: esc(r.error) })); return; }
+        compOut.append(el('div', { class: 'stat-grid' }, [
+          stat('Parole', String(r.words)),
+          stat('Titolo', `${r.titleLength}`),
+          stat('Description', `${r.descriptionLength}`),
+          stat('Link interni', String(r.internalLinks)),
+        ]));
+        const flag = (ok) => ok ? '<span class="status on">sì</span>' : '<span class="status off">no</span>';
+        compOut.append(el('div', { class: 'card', style: 'margin-top:14px' }, [
+          el('div', { class: 'meta', html:
+            `<strong>${esc(r.title || '—')}</strong><br>${esc(r.description || 'nessuna description')}` }),
+          el('div', { class: 'meta', style: 'margin-top:12px', html:
+            `H1 ${r.headings.h1} · H2 ${r.headings.h2} · H3 ${r.headings.h3}`
+            + ` · immagini ${r.images.total} (${r.images.altCoverage ?? 0}% con alt)`
+            + `<br>dati strutturati ${flag(r.structuredData)} · canonical ${flag(r.canonical)}`
+            + ` · Open Graph ${flag(r.openGraph.title)} · hreflang ${r.hreflang.length}` }),
+          r.headings.h2Text.length ? el('div', { style: 'margin-top:12px' }, [
+            el('div', { class: 'aside-label', html: 'Come struttura la pagina' }),
+            ...r.headings.h2Text.map((t) => el('div', { class: 'issue', style: 'padding-left:14px', html: esc(t) })),
+          ]) : null,
+        ]));
+      } catch (err) {
+        compOut.append(el('div', { class: 'msg err show', html: esc(err.message) }));
+      } finally { compBtn.disabled = false; compBtn.textContent = 'Analizza pagina'; }
+    });
+
     // live Lighthouse check, if a key is configured
     const psi = el('div', { class: 'card' }, [
       el('h3', { html: 'Analisi della pagina pubblicata' }),
