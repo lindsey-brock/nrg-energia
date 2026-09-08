@@ -32,9 +32,21 @@ export default requireSession(async function handler(req, res) {
 
       // Editing posts also regenerates the blog HTML, so the change is live.
       let pages = [];
+      let removed = [];
       if (type === 'posts') {
+        // pages the previous content produced, so renamed/unpublished posts
+        // don't leave an orphaned HTML file live on the site
+        let before = [];
+        try {
+          const prev = JSON.parse(await readTextFile(file));
+          before = (await buildFromPosts(prev.posts || [])).map((p) => p.path);
+        } catch { /* first write, nothing to clean up */ }
+
         pages = await buildFromPosts(data.posts || []);
-        files.push(...pages);
+        const keep = new Set(pages.map((p) => p.path));
+        removed = before.filter((p) => !keep.has(p));
+
+        files.push(...pages, ...removed.map((path) => ({ path, content: null })));
       }
 
       const result = await writeFiles(files, `Update ${type} from the admin dashboard`);
@@ -43,6 +55,7 @@ export default requireSession(async function handler(req, res) {
         storage: result.mode,
         commit: result.commit || null,
         regenerated: pages.map((p) => p.path),
+        removed,
         note: usingGitHub() ? null : 'Saved to the local filesystem — no commit was made.',
       });
     } catch (err) {

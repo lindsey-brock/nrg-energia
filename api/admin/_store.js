@@ -10,7 +10,7 @@
 //   GITHUB_REPO    "owner/name"
 //   GITHUB_BRANCH  defaults to "main"
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 const REPO_ROOT = join(process.cwd());
@@ -54,6 +54,7 @@ export async function writeFiles(files, message) {
   if (!usingGitHub()) {
     for (const f of files) {
       const abs = join(REPO_ROOT, f.path);
+      if (f.content === null) { await rm(abs, { force: true }); continue; }
       await mkdir(dirname(abs), { recursive: true });
       await writeFile(abs, f.content, 'utf8');
     }
@@ -67,6 +68,11 @@ export async function writeFiles(files, message) {
 
   const blobs = [];
   for (const f of files) {
+    // sha:null removes the path in the new tree
+    if (f.content === null) {
+      blobs.push({ path: f.path, mode: '100644', type: 'blob', sha: null });
+      continue;
+    }
     const blob = await gh(`/repos/${repo}/git/blobs`, {
       method: 'POST',
       body: JSON.stringify({ content: Buffer.from(f.content, 'utf8').toString('base64'), encoding: 'base64' }),

@@ -57,6 +57,17 @@ Without `GITHUB_TOKEN` the admin has nowhere to persist to on Vercel — the
 filesystem there is read-only. With it, saving commits to the repo and the
 resulting push redeploys the site.
 
+## Creating and removing posts
+
+"+ Nuovo articolo" creates a **draft** and opens it in the canvas. Drafts
+generate no pages and don't appear on the site — tick "Pubblicato" when it's
+ready. "+ Nuovo lavoro" does the same for portfolio items.
+
+Deleting a post, unpublishing it, or renaming its slug removes the pages it used
+to produce, in the same commit as the save. Without that, a renamed post would
+leave its old URL live forever. `npm run build:blog` does the same cleanup from
+the command line, and `npm run check:blog` reports stale files as drift.
+
 ## Editor
 
 The blog editor is a canvas, not a form: the article renders with the site's own

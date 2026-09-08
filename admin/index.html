@@ -347,8 +347,50 @@ const loading = (parent) => parent.append(el('div', { class: 'empty', html: '<sp
 // ── blog ───────────────────────────────────────────────────────────────────
 let postsDoc = null;
 
+const MONTHS_IT = ['gennaio','febbraio','marzo','aprile','maggio','giugno',
+                  'luglio','agosto','settembre','ottobre','novembre','dicembre'];
+
+function blankPost() {
+  const now = new Date();
+  const iso = now.toISOString().slice(0, 10);
+  const itDate = `${now.getDate()} ${MONTHS_IT[now.getMonth()]} ${now.getFullYear()}`;
+  const enDate = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const side = (lang) => ({
+    slug: lang === 'it' ? 'nuovo-articolo' : 'new-article',
+    tag: lang === 'it' ? 'Fotovoltaico' : 'Solar Power',
+    dateLabel: lang === 'it' ? itDate : enDate,
+    readLabel: lang === 'it' ? '2 min di lettura' : '2 min read',
+    title: lang === 'it' ? 'Nuovo articolo' : 'New article',
+    excerpt: '', metaDescription: '', imageAlt: '', inlineAlt: '', inlineCaption: '',
+    lead: '',
+    sections: [{
+      id: 'sezione-1',
+      heading: lang === 'it' ? 'Prima sezione' : 'First section',
+      blocks: [{ type: 'p', html: '' }],
+    }],
+  });
+  return {
+    id: `post-${Date.now().toString(36)}`,
+    published: false,          // starts as a draft: no page is generated until published
+    date: iso, readMinutes: 2,
+    category: 'fotovoltaico',
+    image: '', imageCaption: '', inlineImage: '',
+    service: 'energie-rinnovabili',
+    it: side('it'), en: side('en'),
+  };
+}
+
 VIEWS.blog = async (root) => {
-  header(root, 'Blog', 'Gli articoli pubblicati su /blog e /services/en/blog. Salvando, le pagine HTML vengono rigenerate.');
+  header(root, 'Blog', 'Gli articoli pubblicati su /blog e /services/en/blog. Salvando, le pagine HTML vengono rigenerate.',
+    el('button', {
+      class: 'btn btn-primary btn-sm',
+      onclick: () => {
+        if (!postsDoc) return;
+        const fresh = blankPost();
+        postsDoc.posts.unshift(fresh);
+        openPostEditor(fresh, { isNew: true });
+      },
+    }, ['+ Nuovo articolo']));
   const body = el('div'); root.append(body); loading(body);
   try {
     const { data } = await api('content?type=posts');
@@ -398,11 +440,11 @@ async function uploadImage(file) {
   return `v${body.version}/${body.public_id}.${body.format}`;
 }
 
-function openPostEditor(post) {
+function openPostEditor(post, { isNew = false } = {}) {
   work.innerHTML = '';
   const draft = structuredClone(post);
   let lang = 'it';
-  let dirty = false;
+  let dirty = isNew;
 
   const langSwitch = el('div', { class: 'lang-switch' });
   const msg = el('div', { class: 'msg' });
@@ -459,6 +501,25 @@ function openPostEditor(post) {
   }
   metaCard.append(metaCols);
 
+  // publish state — new posts start as drafts and generate no pages until this is on
+  const pubCard = el('div', { class: 'card' });
+  const pubCb = el('input', { type: 'checkbox', id: 'pubToggle', style: 'width:auto;margin-right:9px' });
+  pubCb.checked = draft.published !== false;
+  const pubHint = el('p', { class: 'meta', style: 'margin-top:6px' });
+  const syncHint = () => {
+    pubHint.innerHTML = pubCb.checked
+      ? 'Pubblicato: le pagine IT ed EN vengono generate e compaiono su /blog.'
+      : '<strong>Bozza</strong>: nessuna pagina viene generata e l’articolo non compare sul sito.';
+  };
+  pubCb.addEventListener('change', () => { draft.published = pubCb.checked; dirty = true; saveBtn.disabled = false; syncHint(); });
+  syncHint();
+  pubCard.append(
+    el('div', { style: 'display:flex;align-items:center' }, [
+      pubCb, el('label', { for: 'pubToggle', style: 'font-size:15px;font-weight:500' }, ['Pubblicato']),
+    ]),
+    pubHint,
+  );
+
   const sidebarCard = el('div', { class: 'card' }, [
     el('h3', { html: 'Barra laterale' }),
     el('p', { class: 'meta', style: 'margin-bottom:12px',
@@ -473,13 +534,37 @@ function openPostEditor(post) {
   ]));
 
   const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
-  saveBtn.disabled = true;
+  saveBtn.disabled = !isNew;   // a new post is savable straight away
   const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
 
-  work.append(metaCard, sidebarCard, el('div', { class: 'editor-foot' }, [
+  const foot = el('div', { class: 'editor-foot' }, [
     saveBtn, translateBtn,
-    el('button', { class: 'btn btn-ghost', onclick: () => { if (confirmLeave()) render(); } }, ['Annulla']),
-  ]));
+    el('button', {
+      class: 'btn btn-ghost',
+      onclick: () => {
+        // a brand-new post that was never saved should not linger in the list
+        if (isNew && !confirm('Scartare il nuovo articolo?')) return;
+        if (isNew) postsDoc.posts = postsDoc.posts.filter((p) => p.id !== draft.id);
+        else if (!confirmLeave()) return;
+        render();
+      },
+    }, ['Annulla']),
+  ]);
+  if (!isNew) {
+    foot.append(el('button', {
+      class: 'btn btn-danger btn-sm', style: 'margin-left:auto',
+      onclick: async () => {
+        if (!confirm(`Eliminare “${draft.it.title.replace(/&mdash;/g, '—')}”?\n\nLe pagine IT ed EN verranno rimosse dal sito.`)) return;
+        postsDoc.posts = postsDoc.posts.filter((p) => p.id !== draft.id);
+        try {
+          const r = await api('content?type=posts', { method: 'PUT', body: { data: postsDoc } });
+          alert(`Articolo eliminato. Pagine rimosse: ${r.removed?.length || 0}`);
+          render();
+        } catch (err) { alert(err.message); }
+      },
+    }, ['Elimina articolo']));
+  }
+  work.append(pubCard, metaCard, sidebarCard, foot);
   mountCanvas();
 
   // ── translation ─────────────────────────────────────────────────────────
@@ -537,11 +622,12 @@ function openPostEditor(post) {
     msg.className = 'msg';
     try {
       const idx = postsDoc.posts.findIndex((p) => p.id === post.id);
-      postsDoc.posts[idx] = draft;
+      if (idx >= 0) postsDoc.posts[idx] = draft; else postsDoc.posts.unshift(draft);
       const r = await api('content?type=posts', { method: 'PUT', body: { data: postsDoc } });
       dirty = false;
       msg.className = 'msg ok show';
       msg.innerHTML = `Salvato. Rigenerate ${r.regenerated.length} pagine`
+        + (r.removed?.length ? `, rimosse ${r.removed.length}` : '')
         + (r.commit ? ` · commit <code class="env">${r.commit}</code>` : '')
         + (r.note ? ` · ${esc(r.note)}` : '');
     } catch (err) {

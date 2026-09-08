@@ -58,6 +58,26 @@ async function main() {
       console.log(`  unchanged ${path}`);
     }
   }
+  // any generated page that the current content no longer produces is stale
+  const expected = new Set(pages.map((p) => p.path));
+  const { readdir } = await import('node:fs/promises');
+  const stale = [];
+  for (const dir of ['blog', 'services/en/blog']) {
+    const abs = join(ROOT, dir);
+    if (!existsSync(abs)) continue;
+    for (const name of await readdir(abs)) {
+      if (!name.endsWith('.html')) continue;
+      const rel = `${dir}/${name}`;
+      if (!expected.has(rel)) stale.push(rel);
+    }
+  }
+  for (const rel of stale) {
+    if (check) { console.log(`  STALE   ${rel}`); drift++; continue; }
+    const { rm } = await import('node:fs/promises');
+    await rm(join(ROOT, rel), { force: true });
+    console.log(`  removed ${rel}`);
+  }
+
   if (check) {
     console.log(drift ? `\n${drift} page(s) differ from content/posts.json` : '\nAll pages match content/posts.json');
     process.exit(drift ? 1 : 0);
