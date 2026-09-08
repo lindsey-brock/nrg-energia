@@ -90,6 +90,15 @@
     .score.good { background:var(--green-pale); color:var(--green-dark); }
     .score.mid  { background:#fdf5e0; color:#8a5c10; }
     .score.bad  { background:#fdf1f0; color:var(--red); }
+    .score.sm { min-width:0; font-size:12px; padding:3px 8px; }
+    .acc-toggle { display:flex; align-items:center; gap:10px; width:100%; background:none; border:none;
+      border-top:1px solid var(--warm-gray); margin-top:16px; padding:12px 0 0; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:13px; color:var(--text-mid); text-align:left; }
+    .acc-toggle:hover { color:var(--green-dark); }
+    .acc-caret { font-size:10px; color:var(--text-light); width:10px; }
+    .acc-summary { margin-left:auto; color:var(--text-light); font-size:12.5px; }
+    .acc-panel { display:none; padding-top:4px; }
+    .acc-panel.open { display:block; }
     .issue { font-size:13px; padding:5px 0 5px 20px; position:relative; color:var(--text-mid); }
     .issue::before { content:''; position:absolute; left:5px; top:12px; width:6px; height:6px; border-radius:50%; }
     .issue.error::before { background:var(--red); }
@@ -353,6 +362,7 @@ function header(parent, title, lede, action) {
     action || null,
   ]));
 }
+const scoreClass = (n) => (n >= 90 ? 'good' : n >= 70 ? 'mid' : 'bad');
 const loading = (parent) => parent.append(el('div', { class: 'empty', html: '<span class="spinner"></span> Caricamento…' }));
 
 // ── blog ───────────────────────────────────────────────────────────────────
@@ -404,15 +414,20 @@ VIEWS.blog = async (root) => {
     }, ['+ Nuovo articolo']));
   const body = el('div'); root.append(body); loading(body);
   try {
-    const { data } = await api('content?type=posts');
+    const [{ data }, audit] = await Promise.all([
+      api('content?type=posts'),
+      api('seo').catch(() => ({ reports: [] })),   // audit is a nicety, not a blocker
+    ]);
     postsDoc = data;
     body.innerHTML = '';
     if (!data.posts?.length) { body.append(el('div', { class: 'empty', html: 'Nessun articolo.' })); return; }
-    for (const post of data.posts) body.append(postRow(post));
+    for (const post of data.posts) {
+      body.append(postRow(post, audit.reports.filter((r) => r.postId === post.id)));
+    }
   } catch (err) { failed(body, err); }
 };
 
-function postRow(post) {
+function postRow(post, reports = []) {
   const card = el('div', { class: 'card' });
   card.append(el('div', { class: 'list-row' }, [
     el('img', { src: cloudinary(post.image, 200), alt: '' }),
@@ -424,6 +439,39 @@ function postRow(post) {
     ]),
     el('button', { class: 'btn btn-ghost btn-sm', onclick: () => openPostEditor(post) }, ['Modifica']),
   ]));
+
+  if (reports.length) {
+    const total = reports.reduce((n, r) => n + r.errors + r.warns, 0);
+    const panel = el('div', { class: 'acc-panel' });
+    const chips = reports.map((r) =>
+      `<span class="score sm ${scoreClass(r.score)}">${r.lang.toUpperCase()} ${r.score}</span>`).join(' ');
+
+    const toggle = el('button', {
+      class: 'acc-toggle',
+      onclick: () => {
+        const open = panel.classList.toggle('open');
+        toggle.querySelector('.acc-caret').textContent = open ? '▾' : '▸';
+      },
+    }, [
+      el('span', { class: 'acc-caret' }, ['▸']),
+      el('span', { html: chips }),
+      el('span', { class: 'acc-summary', html:
+        total ? `${total} ${total === 1 ? 'segnalazione' : 'segnalazioni'}` : 'nessun problema' }),
+    ]);
+
+    for (const r of reports) {
+      const group = el('div', { style: 'margin-top:10px' });
+      group.append(el('div', { class: 'aside-label', html:
+        `${r.lang === 'it' ? 'Italiano' : 'English'} — ${r.words} parole · titolo ${r.titleLength} · description ${r.descLength}` }));
+      if (r.issues.length) {
+        for (const i of r.issues) group.append(el('div', { class: `issue ${i.level}`, html: esc(i.message) }));
+      } else {
+        group.append(el('div', { class: 'issue', style: 'padding-left:14px', html: 'Nessun problema rilevato.' }));
+      }
+      panel.append(group);
+    }
+    card.append(toggle, panel);
+  }
   return card;
 }
 
@@ -766,7 +814,6 @@ async function savePortfolio(msg, btn) {
 }
 
 // ── seo ────────────────────────────────────────────────────────────────────
-const scoreClass = (n) => (n >= 90 ? 'good' : n >= 70 ? 'mid' : 'bad');
 
 VIEWS.seo = async (root) => {
   header(root, 'SEO', 'Controlli sulla pagina calcolati dai tuoi contenuti — nessun servizio esterno.');
@@ -781,23 +828,23 @@ VIEWS.seo = async (root) => {
       stat('Pagine controllate', String(d.reports.length)),
     ]));
 
-    for (const r of d.reports) {
-      const card = el('div', { class: 'card' });
-      card.append(el('div', { style: 'display:flex;align-items:center;gap:14px' }, [
-        el('span', { class: `score ${scoreClass(r.score)}` }, [String(r.score)]),
-        el('div', { class: 'grow' }, [
-          el('h3', { html: `${esc(r.title)} <span class="pill grey" style="margin-left:6px">${r.lang.toUpperCase()}</span>`
-            + (r.published ? '' : ' <span class="pill grey">Bozza</span>') }),
-          el('div', { class: 'meta', html:
-            `${r.words} parole · titolo ${r.titleLength} caratteri · description ${r.descLength} caratteri` }),
-        ]),
-      ]));
-      if (r.issues.length) {
-        const list = el('div', { style: 'margin-top:12px' });
-        for (const i of r.issues) list.append(el('div', { class: `issue ${i.level}`, html: esc(i.message) }));
-        card.append(list);
-      } else {
-        card.append(el('div', { class: 'meta', style: 'margin-top:10px', html: 'Nessun problema rilevato.' }));
+    // per-post detail lives under each article in Blog; this stays an overview
+    const worst = [...d.reports].sort((a, b) => a.score - b.score).slice(0, 3)
+      .filter((r) => r.errors + r.warns > 0);
+    if (worst.length) {
+      const card = el('div', { class: 'card' }, [
+        el('h3', { html: 'Da sistemare per primi' }),
+        el('p', { class: 'meta', style: 'margin-top:4px',
+          html: 'Il dettaglio completo è sotto ogni articolo nella scheda Blog.' }),
+      ]);
+      for (const r of worst) {
+        card.append(el('div', { style: 'display:flex;align-items:center;gap:12px;margin-top:14px' }, [
+          el('span', { class: `score sm ${scoreClass(r.score)}` }, [String(r.score)]),
+          el('div', { class: 'grow' }, [
+            el('div', { html: `<strong>${esc(r.title)}</strong> <span class="pill grey">${r.lang.toUpperCase()}</span>` }),
+            el('div', { class: 'meta', html: esc(r.issues[0]?.message || '') }),
+          ]),
+        ]));
       }
       body.append(card);
     }

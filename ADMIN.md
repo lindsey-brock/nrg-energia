@@ -102,7 +102,14 @@ saving.
 
 ## SEO
 
-The **SEO** tab audits every post in both languages straight from
+Every post in the Blog list carries its own score chips (IT and EN) with an
+expandable panel listing what to fix. It recalculates on every load, so a new
+post is audited the moment it is created — there is nothing to run, and no LLM
+involved: the checks are deterministic rules over the content (character counts,
+missing fields, duplicate slugs), not generated text.
+
+The **SEO** tab keeps the site-wide view: totals, the worst-scoring pages, the
+competitor analyser and PageSpeed. It audits every post in both languages from
 `content/posts.json` — no external service, no API key, no network call. It
 checks title and meta-description lengths against SERP display limits, missing
 alt text, thin content, section structure, slug format, and duplicate slugs or
