@@ -7,7 +7,60 @@
   <title>Admin — NRG Energia</title>
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="canvas.css">
   <style>
+    /* ── canvas editor chrome ─────────────────────────────────────────────── */
+    .canvas { background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius);
+              padding:30px 34px 34px; position:relative; }
+    .canvas.drop-hero { outline:2px dashed var(--green-mid); outline-offset:-6px; }
+    .canvas [contenteditable]:focus { outline:none; background:#fbfdfc; box-shadow:0 0 0 2px var(--green-pale); border-radius:4px; }
+    .canvas [contenteditable]:empty::before { content:'Scrivi qui…'; color:var(--text-light); }
+    .canvas-label { font-size:10px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;
+                    color:var(--text-light); margin-bottom:6px; }
+    .canvas .sec { margin-top:26px; padding-top:18px; border-top:1px dashed var(--warm-gray); }
+    .sec-bar { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    .sec-num { font-size:10px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--text-light); }
+    .sec-del { background:none; border:none; cursor:pointer; font-size:11.5px; color:var(--text-light);
+               font-family:'DM Sans',sans-serif; }
+    .sec-del:hover { color:var(--red); }
+    .blk { position:relative; padding:6px 34px 6px 26px; border-radius:6px; }
+    .blk:hover { background:#fcfcfa; }
+    .blk.dragging { opacity:.4; }
+    .blk.over { box-shadow:inset 0 2px 0 var(--green-mid); }
+    .blk-handle { position:absolute; left:4px; top:10px; cursor:grab; color:var(--warm-gray);
+                  font-size:14px; line-height:1; user-select:none; }
+    .blk:hover .blk-handle { color:var(--text-light); }
+    .blk-kind { position:absolute; right:34px; top:8px; font-size:9.5px; letter-spacing:1.2px;
+                text-transform:uppercase; color:var(--text-light); opacity:0; transition:opacity .15s; }
+    .blk:hover .blk-kind { opacity:1; }
+    .blk-del { position:absolute; right:8px; top:4px; background:none; border:none; cursor:pointer;
+               font-size:17px; line-height:1; color:var(--warm-gray); opacity:0; transition:opacity .15s; }
+    .blk:hover .blk-del { opacity:1; }
+    .blk-del:hover { color:var(--red); }
+    .blk-unknown { font-size:13px; color:var(--text-light); font-style:italic; padding:8px 0; }
+    .img-empty { aspect-ratio:16/9; background:var(--off-white); border:2px dashed var(--warm-gray);
+                 border-radius:var(--radius-sm); display:flex; align-items:center; justify-content:center;
+                 color:var(--text-light); font-size:13.5px; }
+    .article-inline-figure.drop img, .article-inline-figure.drop .img-empty { outline:2px dashed var(--green-mid); }
+    .icon-slot { display:inline-flex; color:var(--green-mid); flex-shrink:0; }
+    .add-row { display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+    .add-btn, .add-section { font-family:'DM Sans',sans-serif; font-size:12.5px; background:var(--off-white);
+      border:1px solid var(--warm-gray); color:var(--text-mid); border-radius:50px; padding:6px 14px; cursor:pointer; }
+    .add-btn:hover, .add-section:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
+    .add-section { margin-top:24px; padding:9px 20px; font-size:13.5px; }
+    .canvas-notice { position:sticky; top:8px; z-index:5; display:none; font-size:13px; padding:9px 14px;
+                     border-radius:var(--radius-sm); margin-bottom:14px; }
+    .canvas-notice.show { display:block; }
+    .canvas-notice.busy { background:var(--off-white); color:var(--text-mid); }
+    .canvas-notice.ok { background:var(--green-pale); color:var(--green-dark); }
+    .canvas-notice.err { background:#fdf1f0; color:var(--red); }
+    .lang-switch { display:inline-flex; background:var(--white); border:1px solid var(--warm-gray);
+                   border-radius:50px; padding:3px; gap:2px; }
+    .lang-switch button { font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; border:none;
+      background:none; color:var(--text-mid); padding:6px 16px; border-radius:50px; cursor:pointer; }
+    .lang-switch button.active { background:var(--green-dark); color:#fff; }
+    .canvas-cols { display:grid; grid-template-columns:1fr; gap:18px; }
+    @media (max-width:900px) { .canvas { padding:20px 18px 24px; } }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --green-dark:#1a4d2e; --green-mid:#2d7a4a; --green-light:#4aab6d; --green-pale:#e8f5ec;
@@ -188,6 +241,8 @@
 </div>
 
 <script type="module">
+import { createCanvas } from './editor.js';
+
 const $  = (s, r = document) => r.querySelector(s);
 const el = (t, a = {}, kids = []) => {
   const n = document.createElement(t);
@@ -300,78 +355,156 @@ const FIELDS = [
   ['lead', 'Paragrafo introduttivo', 'textarea'],
 ];
 
+async function uploadImage(file) {
+  const sig = await api('upload');
+  if (!sig.configured) {
+    throw new Error(`Upload non configurato: mancano ${sig.missing.join(', ')}`);
+  }
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('api_key', sig.apiKey);
+  fd.append('timestamp', sig.timestamp);
+  fd.append('folder', sig.folder);
+  fd.append('signature', sig.signature);
+  const r = await fetch(sig.uploadUrl, { method: 'POST', body: fd });
+  const body = await r.json();
+  if (!r.ok) throw new Error(body.error?.message || 'Upload fallito');
+  // store "<version>/<public_id>.<ext>" to match how the site references images
+  return `v${body.version}/${body.public_id}.${body.format}`;
+}
+
 function openPostEditor(post) {
   work.innerHTML = '';
-  header(work, esc(post.it.title.replace(/&mdash;/g, '—')),
-    'Le due lingue si modificano affiancate. I campi accettano HTML (&lt;strong&gt;, &amp;rsquo;).',
-    el('button', { class: 'btn btn-ghost btn-sm', onclick: render }, ['← Tutti gli articoli']));
-
-  const msg = el('div', { class: 'msg' }); work.append(msg);
   const draft = structuredClone(post);
+  let lang = 'it';
+  let dirty = false;
 
-  // shared (non-translated) settings
-  const shared = el('div', { class: 'card' }, [el('h3', { html: 'Impostazioni' })]);
-  const sharedRow = el('div', { class: 'row-2', style: 'margin-top:14px' });
-  sharedRow.append(
-    field('Data', draft.it.dateLabel, (v) => { draft.it.dateLabel = v; }),
-    field('Data (EN)', draft.en.dateLabel, (v) => { draft.en.dateLabel = v; }),
-    field('Categoria', draft.category, (v) => { draft.category = v; }, 'select', ['fotovoltaico', 'coperture', 'bonifica-amianto']),
-    field('Immagine (Cloudinary ID)', draft.image, (v) => { draft.image = v; }),
-  );
-  shared.append(sharedRow);
-  const pub = el('div', { class: 'field', style: 'margin-top:6px' });
-  const cb = el('input', { type: 'checkbox', id: 'pubcb', style: 'width:auto;margin-right:8px' });
-  cb.checked = draft.published !== false;
-  cb.addEventListener('change', () => { draft.published = cb.checked; });
-  pub.append(cb, el('label', { for: 'pubcb', style: 'font-size:14px' }, ['Pubblicato']));
-  shared.append(pub);
-  work.append(shared);
+  const langSwitch = el('div', { class: 'lang-switch' });
+  const msg = el('div', { class: 'msg' });
+  const canvasHost = el('div');
 
-  // bilingual columns
-  const cols = el('div', { class: 'lang-cols' });
-  for (const [lang, label] of [['it', 'Italiano'], ['en', 'English']]) {
-    const col = el('div', { class: 'lang-col card' }, [el('h4', { html: label })]);
-    col.append(field('Slug (URL)', draft[lang].slug, (v) => { draft[lang].slug = v; }));
-    col.append(field('Etichetta categoria', draft[lang].tag, (v) => { draft[lang].tag = v; }));
-    col.append(field('Tempo di lettura', draft[lang].readLabel, (v) => { draft[lang].readLabel = v; }));
-    for (const [key, lbl, kind] of FIELDS) {
-      col.append(field(lbl, draft[lang][key], (v) => { draft[lang][key] = v; }, kind));
-    }
-    col.append(field('Testo alternativo immagine', draft[lang].imageAlt, (v) => { draft[lang].imageAlt = v; }));
-    col.append(el('h4', { html: 'Sezioni', style: 'margin-top:22px' }));
-    draft[lang].sections.forEach((sec, i) => {
-      col.append(field(`Titolo sezione ${i + 1}`, sec.heading, (v) => { sec.heading = v; }));
+  header(work,
+    esc(draft.it.title.replace(/&mdash;/g, '—')),
+    'Scrivi direttamente sulla pagina. Trascina un’immagine per sostituirla.',
+    el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [
+      langSwitch,
+      el('button', { class: 'btn btn-ghost btn-sm', onclick: () => { if (confirmLeave()) render(); } }, ['← Tutti gli articoli']),
+    ]));
+  work.append(msg, canvasHost);
+
+  const confirmLeave = () => !dirty || confirm('Ci sono modifiche non salvate. Uscire comunque?');
+
+  function mountCanvas() {
+    canvasHost.innerHTML = '';
+    const { el: canvasEl } = createCanvas({
+      lang, langData: draft[lang], post: draft,
+      onDirty: () => { dirty = true; saveBtn.disabled = false; },
+      uploadImage,
+    });
+    canvasHost.append(canvasEl);
+  }
+
+  for (const [code, label] of [['it', 'Italiano'], ['en', 'English']]) {
+    langSwitch.append(el('button', {
+      class: code === lang ? 'active' : '',
+      onclick: (e) => {
+        lang = code;
+        [...langSwitch.children].forEach((b) => b.classList.toggle('active', b === e.target));
+        mountCanvas();
+      },
+    }, [label]));
+  }
+
+  // ── metadata (titles, slugs, SEO) stays a form: it isn't part of the canvas
+  const metaCard = el('div', { class: 'card', style: 'margin-top:18px' }, [el('h3', { html: 'Metadati' })]);
+  const metaCols = el('div', { class: 'lang-cols', style: 'margin-top:14px' });
+  for (const code of ['it', 'en']) {
+    const col = el('div', { class: 'lang-col' }, [el('h4', { html: code === 'it' ? 'Italiano' : 'English' })]);
+    col.append(field('Titolo', draft[code].title, (v) => { draft[code].title = v; dirty = true; }));
+    col.append(field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; }));
+    col.append(field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; }, 'textarea'));
+    col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; }, 'textarea'));
+    col.append(field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; }));
+    col.append(field('Data', draft[code].dateLabel, (v) => { draft[code].dateLabel = v; dirty = true; }));
+    metaCols.append(col);
+  }
+  metaCard.append(metaCols);
+
+  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
+  saveBtn.disabled = true;
+  const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
+
+  work.append(metaCard, el('div', { class: 'editor-foot' }, [
+    saveBtn, translateBtn,
+    el('button', { class: 'btn btn-ghost', onclick: () => { if (confirmLeave()) render(); } }, ['Annulla']),
+  ]));
+  mountCanvas();
+
+  // ── translation ─────────────────────────────────────────────────────────
+  translateBtn.addEventListener('click', async () => {
+    if (!confirm('Sovrascrivere la versione inglese con una traduzione automatica dall’italiano?')) return;
+    translateBtn.disabled = true;
+    translateBtn.innerHTML = '<span class="spinner"></span> Traduzione…';
+    msg.className = 'msg';
+    // Collect every translatable string in a fixed order, translate, put back.
+    const slots = [];
+    const src = draft.it, dst = draft.en;
+    slots.push([src, 'lead', dst]);
+    for (const key of ['title', 'excerpt', 'metaDescription', 'imageAlt', 'inlineCaption']) slots.push([src, key, dst]);
+    src.sections.forEach((sec, i) => {
+      const dsec = dst.sections[i];
+      if (!dsec) return;
+      slots.push([sec, 'heading', dsec]);
       sec.blocks.forEach((b, j) => {
-        if (b.type === 'p' || b.type === 'quote') {
-          col.append(field(`${b.type === 'quote' ? 'Citazione' : 'Paragrafo'} ${i + 1}.${j + 1}`,
-            b.html, (v) => { b.html = v; }, 'textarea'));
+        const db = dsec.blocks[j];
+        if (!db) return;
+        if (b.type === 'p' || b.type === 'quote') slots.push([b, 'html', db]);
+        if (b.type === 'rates' || b.type === 'icons') {
+          b.items.forEach((it, k) => {
+            const dit = db.items?.[k];
+            if (dit) slots.push([it, b.type === 'rates' ? 'label' : 'label', dit]);
+          });
         }
       });
     });
-    cols.append(col);
-  }
-  work.append(cols);
+    try {
+      const texts = slots.map(([o, k]) => o[k] ?? '');
+      const r = await api('translate', { method: 'POST', body: { texts } });
+      if (!r.configured) {
+        msg.className = 'msg err show';
+        msg.innerHTML = `Traduzione non configurata: manca <code class="env">${r.missing.join('</code> <code class="env">')}</code>.<br>`
+          + r.setup.map(esc).join('<br>');
+        return;
+      }
+      r.translations.forEach((t, i) => { const [, key, target] = slots[i]; target[key] = t; });
+      dirty = true; saveBtn.disabled = false;
+      msg.className = 'msg ok show';
+      msg.textContent = `Tradotti ${r.translations.length} segmenti. Rivedi la versione inglese prima di salvare.`;
+      if (lang === 'en') mountCanvas();
+    } catch (err) {
+      msg.className = 'msg err show'; msg.textContent = err.message;
+    } finally {
+      translateBtn.disabled = false; translateBtn.textContent = 'Genera versione inglese';
+    }
+  });
 
-  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
-  work.append(el('div', { class: 'editor-foot' }, [
-    saveBtn,
-    el('button', { class: 'btn btn-ghost', onclick: render }, ['Annulla']),
-  ]));
-
+  // ── save ────────────────────────────────────────────────────────────────
   saveBtn.addEventListener('click', async () => {
-    saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner"></span> Salvataggio…';
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner"></span> Salvataggio…';
     msg.className = 'msg';
     try {
       const idx = postsDoc.posts.findIndex((p) => p.id === post.id);
       postsDoc.posts[idx] = draft;
       const r = await api('content?type=posts', { method: 'PUT', body: { data: postsDoc } });
+      dirty = false;
       msg.className = 'msg ok show';
       msg.innerHTML = `Salvato. Rigenerate ${r.regenerated.length} pagine`
         + (r.commit ? ` · commit <code class="env">${r.commit}</code>` : '')
         + (r.note ? ` · ${esc(r.note)}` : '');
     } catch (err) {
       msg.className = 'msg err show'; msg.textContent = err.message;
-    } finally { saveBtn.disabled = false; saveBtn.textContent = 'Salva e rigenera'; }
+    } finally { saveBtn.textContent = 'Salva e rigenera'; saveBtn.disabled = false; }
   });
 }
 

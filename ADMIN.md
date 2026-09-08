@@ -57,6 +57,27 @@ Without `GITHUB_TOKEN` the admin has nowhere to persist to on Vercel — the
 filesystem there is read-only. With it, saving commits to the repo and the
 resulting push redeploys the site.
 
+## Editor
+
+The blog editor is a canvas, not a form: the article renders with the site's own
+CSS and is edited in place. Blocks (paragraph, quote, rate cards, icon list,
+image) can be added, reordered by dragging the handle, or deleted. Titles, slugs
+and SEO fields stay as form fields below the canvas.
+
+Dropping an image onto a figure replaces it; dropping onto empty canvas replaces
+the hero image. Uploads are signed server-side so the Cloudinary secret never
+reaches the browser:
+
+| Variable | Purpose |
+|---|---|
+| `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | signed uploads to the existing `dmegrbq5k` cloud |
+| `DEEPL_API_KEY` | "Genera versione inglese" — IT→EN draft translation |
+
+Translation walks the Italian content in order, sends every segment to DeepL
+with HTML tag handling on, and writes the results into the English side. It is a
+**draft**: it overwrites the English version and should be reviewed before
+saving.
+
 ## Marketing sources
 
 Each platform reports as connected only when its credentials are present. See
