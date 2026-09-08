@@ -71,7 +71,9 @@ createServer(async (req, res) => {
   // ── static, with vercel.json-style clean URLs ─────────────────────────────
   if (path.endsWith('/')) path += 'index.html';
   let file = join(ROOT, path);
-  if (!existsSync(file) && existsSync(`${file}.html`)) file = `${file}.html`;
+  // cleanUrls: "<name>.html" wins over a same-named directory, matching Vercel.
+  // /blog must serve blog.html even though a blog/ directory also exists.
+  if (existsSync(`${file}.html`)) file = `${file}.html`;
   else if (existsSync(file) && (await stat(file)).isDirectory()) file = join(file, 'index.html');
 
   if (!existsSync(file)) { res.statusCode = 404; return res.end('Not found'); }
