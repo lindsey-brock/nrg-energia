@@ -74,7 +74,17 @@ function analyse(html, url) {
 
   const origin = new URL(url).origin;
   const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi)].map((m) => m[1]);
-  const internal = links.filter((href) => href.startsWith('/') || href.startsWith(origin)).length;
+  // internal = anything that isn't another origin or a non-navigational scheme.
+  // Relative hrefs like "portfolio" or "index#servizi" are internal too — an
+  // earlier version only counted "/..." and same-origin absolutes, which
+  // reported 0 for sites built with relative links.
+  const external = /^(https?:)?\/\//i;
+  const nonNav = /^(mailto:|tel:|javascript:|data:|#)/i;
+  const internal = links.filter((href) => {
+    if (nonNav.test(href)) return false;
+    if (external.test(href)) return href.startsWith(origin);
+    return true;
+  }).length;
 
   const body = html.replace(/<(script|style|nav|footer)[\s\S]*?<\/\1>/gi, '');
 
