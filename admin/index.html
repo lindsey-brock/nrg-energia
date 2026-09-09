@@ -603,9 +603,15 @@ async function api(path, opts = {}) {
 
 // ── sign in ────────────────────────────────────────────────────────────────
 const gate = $('#gate'), app = $('#app'), work = $('#work');
-function showGate(message) {
+function showGate(message, { lock = false } = {}) {
   gate.style.display = 'flex'; app.classList.remove('show');
   if (message) { $('#gateMsg').textContent = message; $('#gateMsg').classList.add('show'); }
+  // No password can work until the environment is set, so do not ask for one
+  if (lock) {
+    $('#pw').disabled = true;
+    $('#gateBtn').disabled = true;
+    $('#gateForm').style.opacity = '.45';
+  }
 }
 function showApp() { gate.style.display = 'none'; app.classList.add('show'); render(); }
 
@@ -2153,7 +2159,11 @@ function failed(parent, err) {
 (async () => {
   try {
     const s = await api('session');
-    if (!s.configured) { showGate('Admin non configurato su questo deployment.'); return; }
+    if (!s.configured) {
+      showGate('Accesso non ancora attivo su questo sito. Chi lo gestisce deve completare la configurazione.',
+        { lock: true });
+      return;
+    }
     s.authenticated ? showApp() : showGate();
   } catch {
     showGate('API non raggiungibile. L’admin richiede le funzioni serverless (vercel dev o un deploy su Vercel).');
