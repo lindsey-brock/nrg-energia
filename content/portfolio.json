@@ -10,14 +10,14 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto domestico",
-        "location": "",
+        "location": "Mordano",
         "description": "Impianto fotovoltaico residenziale integrato su pannello sandwich finto coppo. Soluzione che coniuga alta efficienza energetica con un'estetica rispettosa dell'architettura esistente."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Residential solar installation",
-        "location": "",
-        "description": "High-efficiency residential solar installation. A bespoke solution for clean energy production and long-term energy cost reduction."
+        "location": "Mordano",
+        "description": "Residential solar installation integrated on sandwich panel with finto coppo finish in Mordano, combining high energy efficiency with seamless integration into the existing architecture."
       }
     },
     {
@@ -30,14 +30,14 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto domestico",
-        "location": "",
+        "location": "Dozza",
         "description": "Realizzazione di impianto fotovoltaico residenziale integrato. Progettazione personalizzata per massimizzare la produzione energetica nel rispetto del contesto abitativo."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Residential solar installation",
-        "location": "",
-        "description": "Residential solar installation designed to maximise seasonal energy yield and reduce grid consumption."
+        "location": "Dozza",
+        "description": "Residential solar installation integrated on roof tiles in Dozza, designed to blend naturally with the existing roofscape."
       }
     },
     {
@@ -50,14 +50,14 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica amianto e rifacimento copertura",
-        "location": "",
+        "location": "Ravenna",
         "description": "Bonifica completa della copertura in amianto con smaltimento certificato, seguita dal rifacimento del manto di copertura nel rispetto delle normative ambientali vigenti."
       },
       "en": {
-        "tag": "Solar Panel systems",
-        "title": "Battery storage system",
-        "location": "",
-        "description": "Battery storage system paired with an existing solar installation. Optimises self-consumption and ensures energy independence even overnight and on cloudy days."
+        "tag": "Asbestos removal",
+        "title": "Asbestos removal and roof replacement",
+        "location": "Ravenna",
+        "description": "Project on an industrial building in the province of Ravenna involving full asbestos removal and installation of a new steel sheet roof with ecological mineral wool."
       }
     },
     {
@@ -74,14 +74,14 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura industriale",
-        "location": "",
+        "location": "Massa Lombarda",
         "description": "Progetto su edificio industriale in provincia di Ravenna, esecuzione di copertura metallica curva con lastre profilate per garantire il pieno adattamento alla specifica geometria di progetto."
       },
       "en": {
-        "tag": "Solar Panel systems",
-        "title": "Residential solar installation",
-        "location": "",
-        "description": "Residential solar installation integrated on sandwich panel with finto coppo finish in Mordano, combining high energy efficiency with seamless integration into the existing architecture."
+        "tag": "Roofing",
+        "title": "Industrial roofing",
+        "location": "Massa Lombarda",
+        "description": "Project on an industrial building in the province of Ravenna: installation of curved metal roofing with profiled sheets designed to perfectly follow the specific geometry of the project."
       }
     },
     {
@@ -94,14 +94,14 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto domestico",
-        "location": "",
+        "location": "Brisighella",
         "description": "Impianto fotovoltaico residenziale ad alta efficienza. Soluzione su misura per la produzione di energia pulita e la riduzione dei costi energetici nel lungo periodo."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Residential solar installation",
-        "location": "",
-        "description": "Residential solar installation integrated on roof tiles in Dozza, designed to blend naturally with the existing roofscape."
+        "location": "Brisighella",
+        "description": "High-efficiency residential solar installation. A bespoke solution for clean energy production and long-term energy cost reduction."
       }
     },
     {
@@ -114,14 +114,14 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto domestico",
-        "location": "",
+        "location": "Belluno",
         "description": "Impianto fotovoltaico residenziale integrato progettato per massimizzare la resa energetica stagionale e ridurre i consumi da rete."
       },
       "en": {
-        "tag": "Asbestos removal",
-        "title": "Asbestos removal and roof replacement",
-        "location": "",
-        "description": "Project on an industrial building in the province of Ravenna involving full asbestos removal and installation of a new steel sheet roof with ecological mineral wool."
+        "tag": "Solar Panel systems",
+        "title": "Residential solar installation",
+        "location": "Belluno",
+        "description": "Residential solar installation designed to maximise seasonal energy yield and reduce grid consumption."
       }
     },
     {
@@ -134,14 +134,14 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Sistema di accumulo",
-        "location": "",
+        "location": "Ferrara",
         "description": "Sistema di accumulo energetico abbinato a impianto fotovoltaico esistente. Ottimizza l'autoconsumo e garantisce autonomia energetica anche nelle ore notturne e nelle giornate nuvolose."
       },
       "en": {
-        "tag": "Roofing",
-        "title": "Industrial roofing",
-        "location": "",
-        "description": "Project on an industrial building in the province of Ravenna: installation of curved metal roofing with profiled sheets designed to perfectly follow the specific geometry of the project."
+        "tag": "Solar Panel systems",
+        "title": "Battery storage system",
+        "location": "Ferrara",
+        "description": "Battery storage system paired with an existing solar installation. Optimises self-consumption and ensures energy independence even overnight and on cloudy days."
       }
     },
     {
@@ -154,13 +154,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura domestica",
-        "location": "",
+        "location": "Imola",
         "description": "Intervento a Imola su copertura residenziale con pannello ad alta integrazione architettonica e ambientale, progettato per armonizzarsi con il contesto urbano esistente garantendo al contempo elevate prestazioni tecniche e durabilità nel tempo."
       },
       "en": {
         "tag": "Roofing",
         "title": "Domestic roofing",
-        "location": "",
+        "location": "Imola",
         "description": "Residential roofing intervention in Imola with a panel offering high architectural and environmental integration, designed to harmonise with the existing urban context while guaranteeing excellent technical performance and durability."
       }
     },
@@ -174,13 +174,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura domestica integrata con fotovoltaico",
-        "location": "",
+        "location": "Imola",
         "description": "Abitazione privata a Imola: nuova copertura in pannello sandwich color testa di moro, scelta per la sua perfetta integrazione naturale con il paesaggio circostante. Il progetto include un impianto fotovoltaico integrato nella copertura per massimizzare l'efficienza energetica senza compromettere l'estetica."
       },
       "en": {
         "tag": "Roofing",
         "title": "Domestic roofing integrated with solar",
-        "location": "",
+        "location": "Imola",
         "description": "Private residence in Imola: new sandwich panel roof in testa di moro colour, chosen for its natural integration with the surrounding landscape. The project includes an integrated solar panel system to maximise energy efficiency without compromising aesthetics."
       }
     },
@@ -198,13 +198,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura domestica",
-        "location": "",
+        "location": "Bologna",
         "description": "Intervento nel centro storico di Bologna su porzione di copertura con pannello ad elevata integrazione architettonica e ambientale, nel rispetto del contesto storico circostante."
       },
       "en": {
         "tag": "Roofing",
         "title": "Domestic roofing",
-        "location": "",
+        "location": "Bologna",
         "description": "Intervention in the historic centre of Bologna on a roof section using a panel with high architectural and environmental integration, respecting the surrounding historic context."
       }
     },
@@ -221,13 +221,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura industriale",
-        "location": "",
+        "location": "Argenta (Fe)",
         "description": "Progetto su edificio rurale in provincia di Ferrara: sostituzione integrale di vecchia copertura deteriorata con pannello Sandwich, per garantire nuove prestazioni termiche, impermeabilità e lunga durata."
       },
       "en": {
         "tag": "Roofing",
         "title": "Industrial roofing",
-        "location": "",
+        "location": "Argenta (Fe)",
         "description": "Project on a rural building in the province of Ferrara: full replacement of a deteriorated old roof with sandwich panel, ensuring new thermal performance, waterproofing and long-term durability."
       }
     },
@@ -241,13 +241,13 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto industriale",
-        "location": "",
+        "location": "Imola",
         "description": "Impianto fotovoltaico di 20kWp su tetto curvo di officina meccanica."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Industrial solar installation",
-        "location": "",
+        "location": "Imola",
         "description": "20kWp solar panel system on the curved roof of a mechanical workshop."
       }
     },
@@ -261,13 +261,13 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto industriale",
-        "location": "",
+        "location": "Ferrara",
         "description": "Impianto fotovoltaico su tetto industriale piano con zavorre."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Industrial solar installation",
-        "location": "",
+        "location": "Ferrara",
         "description": "Photovoltaic system on flat industrial roof with ballasted mounting system."
       }
     },
@@ -281,13 +281,13 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Sistema di accumulo",
-        "location": "",
+        "location": "Imola",
         "description": "Sistema di accumulo (batteria) per un alto livello di autonomia energetica domestica a Imola."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Battery storage system",
-        "location": "",
+        "location": "Imola",
         "description": "Battery storage system providing a high level of domestic energy independence in Imola."
       }
     },
@@ -304,13 +304,13 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica amianto e rifacimento copertura",
-        "location": "",
-        "description": "Progetto realizzato su edificio industriale in Ozzano Emilia di Bologna, che ha incluso lo smaltimento dell&apos;intera copertura in amianto mq 4000 e la realizzazione di una nuova copertura in lamiera di acciaio con lana minerale ecologica."
+        "location": "Ozzano dell'Emilia",
+        "description": "Progetto realizzato su edificio industriale in Ozzano Emilia di Bologna, che ha incluso lo smaltimento dell'intera copertura in amianto mq 4000 e la realizzazione di una nuova copertura in lamiera di acciaio con lana minerale ecologica."
       },
       "en": {
         "tag": "Asbestos removal",
         "title": "Asbestos removal and roof replacement",
-        "location": "",
+        "location": "Ozzano dell'Emilia",
         "description": "Project on an industrial building in Ozzano Emilia, Bologna, involving the disposal of the entire asbestos roof (4,000 sqm) and installation of a new steel sheet roof with ecological mineral wool."
       }
     },
@@ -328,13 +328,13 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica amianto e rifacimento copertura",
-        "location": "",
-        "description": "Progetto realizzato su edificio industriale in Imola, che ha incluso lo smaltimento dell&apos;intera copertura in amianto mq 1000 e la realizzazione di una nuova copertura caratterizzata in pannello sandwich curvo."
+        "location": "Imola",
+        "description": "Progetto realizzato su edificio industriale in Imola, che ha incluso lo smaltimento dell'intera copertura in amianto mq 1000 e la realizzazione di una nuova copertura caratterizzata in pannello sandwich curvo."
       },
       "en": {
         "tag": "Asbestos removal",
         "title": "Asbestos removal and roof replacement",
-        "location": "",
+        "location": "Imola",
         "description": "Project on an industrial building in Imola involving the disposal of the entire asbestos roof (1,000 sqm) and installation of a new curved sandwich panel roof."
       }
     },
@@ -352,13 +352,13 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica amianto e rifacimento copertura",
-        "location": "",
-        "description": "Progetto realizzato su edificio rurale adiacente l&apos;abitazione privata a Mordano in provincia di Bologna, che ha incluso lo smaltimento dell&apos;intera copertura in amianto mq 200 e la realizzazione di una nuova copertura in lamiera di acciaio."
+        "location": "Mordano",
+        "description": "Progetto realizzato su edificio rurale adiacente l'abitazione privata a Mordano in provincia di Bologna, che ha incluso lo smaltimento dell'intera copertura in amianto mq 200 e la realizzazione di una nuova copertura in lamiera di acciaio."
       },
       "en": {
         "tag": "Asbestos removal",
         "title": "Asbestos removal and roof replacement",
-        "location": "",
+        "location": "Mordano",
         "description": "Project on a rural outbuilding adjacent to a private residence in Mordano, Bologna, involving the disposal of the entire asbestos roof (200 sqm) and installation of a new steel sheet roof."
       }
     },
@@ -375,13 +375,13 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica amianto e rifacimento copertura",
-        "location": "",
+        "location": "Marradi (FI)",
         "description": "Riqualificazione allevamento per il benessere animale."
       },
       "en": {
         "tag": "Asbestos removal",
         "title": "Asbestos removal and roof replacement",
-        "location": "",
+        "location": "Marradi (FI)",
         "description": "Livestock facility renovation for animal welfare improvement."
       }
     },
@@ -395,13 +395,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura domestica",
-        "location": "",
+        "location": "Bologna",
         "description": "Abitazione privata a Bologna: rimozione integrale dei vecchi coppi e installazione di nuova copertura con pannello coibentato finto coppo anticato. Progetto comprensivo di posa nuova Linea Vita."
       },
       "en": {
         "tag": "Roofing",
         "title": "Domestic roofing",
-        "location": "",
+        "location": "Bologna",
         "description": "Private residence in Bologna: full removal of old roof tiles and installation of new insulated antique-finish finto coppo panel. Project includes installation of a new safety lifeline (Linea Vita)."
       }
     },
@@ -419,13 +419,13 @@
       "it": {
         "tag": "Coperture",
         "title": "Copertura domestica integrata con fotovoltaico",
-        "location": "",
+        "location": "Imola",
         "description": "Progetto su abitazione privata a Imola: cambio parziale delle tegole con lamiera e isolamento con lana minerale ecologica, con impianto fotovoltaico integrato."
       },
       "en": {
         "tag": "Roofing",
         "title": "Domestic roofing integrated with solar",
-        "location": "",
+        "location": "Imola",
         "description": "Project on a private residence in Imola: partial replacement of roof tiles with sheet metal and ecological mineral wool insulation, with integrated solar panel system."
       }
     },
@@ -443,13 +443,13 @@
       "it": {
         "tag": "Amianto",
         "title": "Bonifica Amianto e rifacimento copertura",
-        "location": "",
-        "description": "Bonifica completa della copertura in amianto con smaltimento certificato, rifacimento del manto di copertura e ripristino dell&apos;immobile nel rispetto delle normative ambientali vigenti."
+        "location": "Loiano (BO)",
+        "description": "Bonifica completa della copertura in amianto con smaltimento certificato, rifacimento del manto di copertura e ripristino dell'immobile nel rispetto delle normative ambientali vigenti."
       },
       "en": {
         "tag": "Asbestos",
         "title": "Asbestos removal and roof replacement",
-        "location": "",
+        "location": "Loiano (BO)",
         "description": "Full asbestos roof removal with certified disposal, replacement of the roof covering and building restoration in full compliance with current environmental regulations."
       }
     },
@@ -467,13 +467,13 @@
       "it": {
         "tag": "Fotovoltaico",
         "title": "Impianto industriale",
-        "location": "",
+        "location": "Imola",
         "description": "Installazione di impianto fotovoltaico in Imola, 200 kWp su copertura curva industriale."
       },
       "en": {
         "tag": "Solar Panel systems",
         "title": "Industrial solar installation",
-        "location": "",
+        "location": "Imola",
         "description": "Installation of photovoltaic system in Imola, 200 kWp on curved industrial roof."
       }
     }
