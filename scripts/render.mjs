@@ -38,6 +38,14 @@ const ICONS = {
 
 const tagClass = (category) => (category === 'coperture' ? ' blue' : '');
 
+// Plain-text fields (title, excerpt, alt text…) hold real characters, not HTML
+// entities, so the editor can show them as typed. They are escaped here on the
+// way into the page. Rich fields — the lead, section headings and block html —
+// intentionally contain markup and are inserted as-is.
+const esc = (s = '') => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escAttr = (s = '') => esc(s).replace(/"/g, '&quot;');
+
 // ── SEO head block ───────────────────────────────────────────────────────────
 const OG_ALT = {
   it: (post) => `/blog/${post.it.slug}`,
@@ -124,8 +132,8 @@ function renderBlock(block, post, lang) {
       const L = post[lang];
       return [
         '        <figure class="article-inline-figure">',
-        `          <img src="${img(post.inlineImage, 1200)}" alt="${L.inlineAlt || ''}" loading="lazy" decoding="async">`,
-        `          <figcaption>${L.inlineCaption || ''}</figcaption>`,
+        `          <img src="${img(post.inlineImage, 1200)}" alt="${escAttr(L.inlineAlt || '')}" loading="lazy" decoding="async">`,
+        `          <figcaption>${esc(L.inlineCaption || '')}</figcaption>`,
         '        </figure>',
       ].join('\n');
     }
@@ -207,15 +215,15 @@ export function renderCard(post, lang, { featured = false, reverse = false, from
     return [
       `  <a href="${url}" class="post-featured${reverse ? ' reverse' : ''}" data-category="${post.category}">`,
       '    <div class="post-featured-media">',
-      `      <img src="${img(post.image, 1200)}" alt="${L.imageAlt}" loading="lazy" decoding="async">`,
-      `      <span class="post-tag${cls} post-media-tag">${L.tag}</span>`,
+      `      <img src="${img(post.image, 1200)}" alt="${escAttr(L.imageAlt)}" loading="lazy" decoding="async">`,
+      `      <span class="post-tag${cls} post-media-tag">${esc(L.tag)}</span>`,
       '    </div>',
       '    <div class="post-featured-body">',
       '      <div class="post-meta">',
-      `        <span class="post-date">${L.dateLabel} &middot; ${L.readLabel}</span>`,
+      `        <span class="post-date">${esc(L.dateLabel)} &middot; ${esc(L.readLabel)}</span>`,
       '      </div>',
-      `      <h2 class="post-title">${L.title}</h2>`,
-      `      <p class="post-excerpt">${L.excerpt}</p>`,
+      `      <h2 class="post-title">${esc(L.title)}</h2>`,
+      `      <p class="post-excerpt">${esc(L.excerpt)}</p>`,
       `      <span class="post-read">${t.readMore}</span>`,
       '    </div>',
       '  </a>',
@@ -225,13 +233,13 @@ export function renderCard(post, lang, { featured = false, reverse = false, from
   return [
     `      <a href="${url}" class="post-card" data-category="${post.category}">`,
     '        <div class="post-card-media">',
-    `          <img src="${img(post.image, 800)}" alt="${L.imageAlt}" loading="lazy" decoding="async">`,
-    `          <span class="post-tag${cls} post-media-tag">${L.tag}</span>`,
+    `          <img src="${img(post.image, 800)}" alt="${escAttr(L.imageAlt)}" loading="lazy" decoding="async">`,
+    `          <span class="post-tag${cls} post-media-tag">${esc(L.tag)}</span>`,
     '        </div>',
     '        <div class="post-card-body">',
-    `          <div class="post-meta"><span class="post-date">${L.dateLabel}</span></div>`,
-    `          <h3 class="post-title">${L.title}</h3>`,
-    `          <p class="post-excerpt">${L.excerpt}</p>`,
+    `          <div class="post-meta"><span class="post-date">${esc(L.dateLabel)}</span></div>`,
+    `          <h3 class="post-title">${esc(L.title)}</h3>`,
+    `          <p class="post-excerpt">${esc(L.excerpt)}</p>`,
     `          <span class="post-read">${t.readMore}</span>`,
     '        </div>',
     '      </a>',
@@ -263,7 +271,7 @@ export function renderArticle(template, post, posts, lang) {
 
   const heroFigure = [
     '<figure class="article-figure">',
-    `  <img src="${img(post.image, 1600)}" alt="${L.imageAlt}" loading="eager" decoding="async">`,
+    `  <img src="${img(post.image, 1600)}" alt="${escAttr(L.imageAlt)}" loading="eager" decoding="async">`,
     post.imageCaption ? `  <figcaption>${post.imageCaption}</figcaption>` : null,
     '</figure>',
   ].filter(Boolean).join('\n');
@@ -271,18 +279,18 @@ export function renderArticle(template, post, posts, lang) {
   const altSlug = lang === 'it' ? post.en.slug : post.it.slug;
   const altHref = lang === 'it' ? `${root}services/en/blog/${altSlug}` : `${root}blog/${altSlug}`;
   const blogHome = lang === 'it' ? `${root}blog` : `${root}services/en/blog`;
-  const plainTitle = L.title.replace(/&mdash;/g, '-');
+  const plainTitle = L.title.replace(/&mdash;/g, '-').replace(/—/g, '-');
 
   return template
     .replace('{{SEO_META}}', articleSeo(post, lang))
-    .replace('{{TITLE}}', `${plainTitle} &mdash; NRG Energia`)
-    .replace('{{META_DESCRIPTION}}', L.metaDescription)
+    .replace('{{TITLE}}', `${esc(plainTitle)} &mdash; NRG Energia`)
+    .replace('{{META_DESCRIPTION}}', escAttr(L.metaDescription))
     .replace(/\{\{ALT_HREF\}\}/g, altHref)
     .replace(/\{\{TAG_CLASS\}\}/g, tagClass(post.category))
-    .replace(/\{\{TAG\}\}/g, L.tag)
-    .replace('{{TITLE_HTML}}', L.title)
-    .replace('{{DATE}}', L.dateLabel)
-    .replace('{{READ}}', L.readLabel)
+    .replace(/\{\{TAG\}\}/g, esc(L.tag))
+    .replace('{{TITLE_HTML}}', esc(L.title))
+    .replace('{{DATE}}', esc(L.dateLabel))
+    .replace('{{READ}}', esc(L.readLabel))
     .replace('{{HERO_FIGURE}}', heroFigure)
     .replace('{{BODY}}', renderBody(post, lang))
     .replace('{{ASIDE}}', renderAside(post, lang))

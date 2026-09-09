@@ -632,7 +632,12 @@ function openPostEditor(post, { isNew = false } = {}) {
       ? 'Pubblicato: le pagine IT ed EN vengono generate e compaiono su /blog.'
       : '<strong>Bozza</strong>: nessuna pagina viene generata e l’articolo non compare sul sito.';
   };
-  pubCb.addEventListener('change', () => { draft.published = pubCb.checked; dirty = true; saveBtn.disabled = false; syncHint(); });
+  const saveLabel = () => (pubCb.checked ? 'Salva e pubblica' : 'Salva bozza');
+  pubCb.addEventListener('change', () => {
+    draft.published = pubCb.checked; dirty = true;
+    saveBtn.disabled = false; syncHint();
+    saveBtn.textContent = saveLabel();
+  });
   syncHint();
   pubCard.append(
     el('div', { style: 'display:flex;align-items:center' }, [
@@ -654,7 +659,7 @@ function openPostEditor(post, { isNew = false } = {}) {
     }),
   ]));
 
-  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e pubblica']);
+  const saveBtn = el('button', { class: 'btn btn-primary' }, [pubCb.checked ? 'Salva e pubblica' : 'Salva bozza']);
   saveBtn.disabled = !isNew;   // a new post is savable straight away
   const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
 
@@ -753,7 +758,7 @@ function openPostEditor(post, { isNew = false } = {}) {
         + (r.note ? ` · ${esc(r.note)}` : '');
     } catch (err) {
       msg.className = 'msg err show'; msg.textContent = err.message;
-    } finally { saveBtn.textContent = 'Salva e pubblica'; saveBtn.disabled = false; }
+    } finally { saveBtn.textContent = saveLabel(); saveBtn.disabled = false; }
   });
 }
 

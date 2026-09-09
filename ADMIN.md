@@ -75,6 +75,16 @@ CSS and is edited in place. Blocks (paragraph, quote, rate cards, icon list,
 image) can be added, reordered by dragging the handle, or deleted. Titles, slugs
 and SEO fields stay as form fields below the canvas.
 
+Plain-text fields — title, excerpt, meta description, alt text — hold real
+characters, not HTML entities, so an editor sees `l'abitazione` rather than
+`l&rsquo;abitazione`. `scripts/render.mjs` escapes them on the way into the
+page. Rich fields (the lead, section headings, block html) keep their markup:
+they are edited on the canvas, where entities render as characters anyway.
+
+The save button follows the publish toggle — **Salva e pubblica** when the post
+is live, **Salva bozza** when it is not — so it never claims to publish
+something it is only filing away.
+
 Blocks available: paragraph, sub-heading (H3/H4), pull quote, callout box,
 rate cards, icon list, image. The article title is the page's only H1 — one per
 page is what search engines expect — so body headings start at H2 (the section
