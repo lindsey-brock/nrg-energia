@@ -62,12 +62,14 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   };
 
   function insertBlock(section, index, block) {
+    snapshot();
     const at = index === null || index < 0 ? section.blocks.length : index;
     section.blocks.splice(at, 0, block);
     const m = mirrorOf(section);
     if (m) m.blocks.splice(Math.min(at, m.blocks.length), 0, structuredClone(block));
   }
   function removeBlock(section, block) {
+    snapshot();
     const i = section.blocks.indexOf(block);
     if (i < 0) return;
     section.blocks.splice(i, 1);
@@ -75,6 +77,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     if (m && m.blocks[i]) m.blocks.splice(i, 1);
   }
   function moveBlock(section, from, to) {
+    snapshot();
     const [moved] = section.blocks.splice(from, 1);
     section.blocks.splice(to, 0, moved);
     const m = mirrorOf(section);
@@ -85,6 +88,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   }
   /** An image belongs to the post, not to one language: set it on both sides. */
   function setBlockImage(section, block, publicId) {
+    snapshot();
     block.image = publicId;
     const m = mirrorOf(section);
     const i = section.blocks.indexOf(block);
@@ -111,12 +115,14 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   const TOOLS = {
     it: { style: 'Stile', para: 'Paragrafo', h3: 'Sottotitolo H3', h4: 'Sottotitolo H4', quote: 'Citazione',
           bold: 'Grassetto', italic: 'Corsivo', underline: 'Sottolineato',
-          link: 'Inserisci link', unlink: 'Rimuovi link', ul: 'Elenco puntato', ol: 'Elenco numerato',
-          clear: 'Togli formattazione', insert: 'Inserisci', hint: 'Seleziona del testo per formattarlo' },
+          link: 'Inserisci link', ul: 'Elenco puntato', ol: 'Elenco numerato',
+          undo: 'Annulla (⌘Z)', redo: 'Ripristina (⇧⌘Z)',
+          insert: 'Inserisci', hint: 'Seleziona del testo per formattarlo' },
     en: { style: 'Style', para: 'Paragraph', h3: 'Heading H3', h4: 'Heading H4', quote: 'Quote',
           bold: 'Bold', italic: 'Italic', underline: 'Underline',
-          link: 'Insert link', unlink: 'Remove link', ul: 'Bulleted list', ol: 'Numbered list',
-          clear: 'Clear formatting', insert: 'Insert', hint: 'Select text to format it' },
+          link: 'Insert link', ul: 'Bulleted list', ol: 'Numbered list',
+          undo: 'Undo (⌘Z)', redo: 'Redo (⇧⌘Z)',
+          insert: 'Insert', hint: 'Select text to format it' },
   };
 
   /** The block wrapper holding the current selection, if any. */
@@ -176,7 +182,23 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       openMenu = menu;
     });
 
+    const undoBtn = h('button', {
+      class: 'fmt-btn', title: t.undo,
+      onmousedown: (e) => { e.preventDefault(); undo(); },
+    }, ['↶']);
+    const redoBtn = h('button', {
+      class: 'fmt-btn', title: t.redo,
+      onmousedown: (e) => { e.preventDefault(); redo(); },
+    }, ['↷']);
+    syncHistoryButtons = () => {
+      undoBtn.disabled = past.length === 0;
+      redoBtn.disabled = future.length === 0;
+    };
+    syncHistoryButtons();
+
     bar.append(
+      undoBtn, redoBtn,
+      h('span', { class: 'fmt-sep' }),
       style,
       h('span', { class: 'fmt-sep' }),
       btn('B', t.bold, cmd('bold'), 'bold', 'bold'),
@@ -187,12 +209,9 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         const url = prompt(t.link, 'https://');
         if (url) document.execCommand('createLink', false, url);
       })),
-      btn('⌦', t.unlink, cmd('unlink')),
       h('span', { class: 'fmt-sep' }),
       btn('• —', t.ul, cmd('insertUnorderedList'), '', 'insertUnorderedList'),
       btn('1. —', t.ol, cmd('insertOrderedList'), '', 'insertOrderedList'),
-      h('span', { class: 'fmt-sep' }),
-      btn('⌫', t.clear, cmd('removeFormat')),
       h('span', { class: 'fmt-sep' }),
       insertWrap,
       h('span', { class: 'fmt-hint' }, [t.hint]),
@@ -244,7 +263,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   // ── inline editable ───────────────────────────────────────────────────────
   function editable(tag, html, onChange, cls = '') {
     const n = h(tag, { class: cls, contenteditable: 'true', spellcheck: 'false', html: html || '' });
-    n.addEventListener('input', () => { onChange(n.innerHTML.trim()); touch(); });
+    n.addEventListener('input', () => { snapshotText(); onChange(n.innerHTML.trim()); touch(); });
     // keep pasted content as plain text so stray markup can't leak in
     n.addEventListener('paste', (e) => {
       e.preventDefault();
@@ -253,6 +272,74 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     });
     return n;
   }
+
+  // ── history ───────────────────────────────────────────────────────────────
+  // Snapshots of the post itself, not of the DOM: the canvas is re-rendered
+  // from the model on every change, so execCommand's own undo stack is
+  // discarded constantly and cannot be relied on.
+  const past = [];
+  const future = [];
+  const HISTORY_LIMIT = 60;
+  let lastTextSnapshot = 0;
+
+  /**
+   * Copies source over target in place. Object identity has to survive, because
+   * langData is a reference to post[lang] captured when the canvas was built —
+   * replacing the object would leave the editor writing into a detached copy.
+   */
+  function restoreInto(target, source) {
+    if (Array.isArray(target) && Array.isArray(source)) {
+      target.length = source.length;
+      source.forEach((v, i) => {
+        if (v && typeof v === 'object') {
+          if (!target[i] || typeof target[i] !== 'object') target[i] = Array.isArray(v) ? [] : {};
+          restoreInto(target[i], v);
+        } else target[i] = v;
+      });
+      return;
+    }
+    for (const k of Object.keys(target)) if (!(k in source)) delete target[k];
+    for (const [k, v] of Object.entries(source)) {
+      if (v && typeof v === 'object') {
+        if (!target[k] || typeof target[k] !== 'object') target[k] = Array.isArray(v) ? [] : {};
+        restoreInto(target[k], v);
+      } else target[k] = v;
+    }
+  }
+
+  function snapshot() {
+    past.push(structuredClone(post));
+    if (past.length > HISTORY_LIMIT) past.shift();
+    future.length = 0;
+    syncHistoryButtons();
+  }
+  /** Typing should undo in words, not characters. */
+  function snapshotText() {
+    const now = Date.now();
+    if (now - lastTextSnapshot > 600) { snapshot(); lastTextSnapshot = now; }
+  }
+
+  function undo() {
+    if (!past.length) return;
+    future.push(structuredClone(post));
+    restoreInto(post, past.pop());
+    touch(); paint(); syncHistoryButtons();
+  }
+  function redo() {
+    if (!future.length) return;
+    past.push(structuredClone(post));
+    restoreInto(post, future.pop());
+    touch(); paint(); syncHistoryButtons();
+  }
+  let syncHistoryButtons = () => {};
+
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (!mod || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
+    if (!root.isConnected) return;
+    e.preventDefault();
+    if (e.key.toLowerCase() === 'y' || e.shiftKey) redo(); else undo();
+  });
 
   // ── block selection ───────────────────────────────────────────────────────
   // A selected block can be removed with Backspace or Delete. The key handler

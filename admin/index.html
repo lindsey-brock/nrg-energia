@@ -139,7 +139,8 @@
     .fmt-btn { background:none; border:none; color:var(--text-mid); cursor:pointer; font-size:14px;
       min-width:32px; height:30px; border-radius:6px; font-family:'DM Sans',sans-serif; font-weight:700;
       transition:background .15s, color .15s; }
-    .fmt-btn:hover { background:var(--off-white); color:var(--text-dark); }
+    .fmt-btn:hover:not(:disabled) { background:var(--off-white); color:var(--text-dark); }
+    .fmt-btn:disabled { opacity:.3; cursor:not-allowed; }
     .fmt-btn.on { background:var(--green-pale); color:var(--green-dark); }
     .fmt-btn.ital { font-style:italic; font-weight:500; }
     .fmt-sep { width:1px; height:20px; background:var(--warm-gray); margin:0 6px; }

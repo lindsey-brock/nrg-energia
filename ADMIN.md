@@ -109,12 +109,20 @@ underneath it:
 
 | | |
 |---|---|
+| History | undo, redo — also ⌘Z / ⇧⌘Z |
 | Style | Paragrafo · Sottotitolo H3 · Sottotitolo H4 · Citazione — converts the block the cursor is in |
 | Text | bold, italic, underline |
-| Links | insert, remove |
+| Links | insert |
 | Lists | bulleted, numbered |
-| | clear formatting |
 | **+ Inserisci** | the same element picker as the "+" between blocks, inserting after the current block |
+
+Undo and redo work on the document, not the DOM: the canvas is rebuilt from the
+model on every change, so the browser's own undo stack is discarded constantly
+and cannot be used. Snapshots are taken before each structural edit and, while
+typing, on word boundaries rather than every keystroke. Restoring copies the
+snapshot over the existing objects in place — replacing them would leave the
+editor writing into a detached copy, since the canvas holds a reference to the
+language being edited.
 
 Turning a paragraph into a list swaps its host element from `<p>` to a `<div>`,
 because `<ul>` inside `<p>` is invalid and browsers unnest it; the renderer
