@@ -277,10 +277,18 @@ export function renderCard(post, lang, { featured = false, reverse = false, from
 }
 
 // ── pages ────────────────────────────────────────────────────────────────────
+
+// With every post unpublished there is no card to lead with. The index still
+// has to render: the page is linked from the nav either way.
+const NO_POSTS = {
+  it: '    <p style="text-align:center;color:var(--text-mid);padding:48px 0">Non ci sono ancora articoli pubblicati.</p>',
+  en: '    <p style="text-align:center;color:var(--text-mid);padding:48px 0">No articles have been published yet.</p>',
+};
+
 export function renderIndex(template, posts, lang) {
   const live = posts.filter((p) => p.published !== false);
   const rest = live.slice(1);
-  let cards = renderCard(live[0], lang, { featured: true });
+  let cards = live.length ? renderCard(live[0], lang, { featured: true }) : NO_POSTS[lang];
   if (rest.length === 1) {
     cards += '\n\n' + renderCard(rest[0], lang, { featured: true, reverse: true });
   } else if (rest.length > 1) {
