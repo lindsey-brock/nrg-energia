@@ -50,6 +50,12 @@
       opacity:0; transition:opacity .15s, border-color .15s, color .15s; padding:0; }
     .add-wrap:hover .add-trigger, .add-trigger:focus { opacity:1; }
     .add-trigger:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
+    .add-wrap.drop-here { height:52px; }
+    .add-wrap.drop-here::before { content:''; position:absolute; inset:4px 0;
+      border:2px dashed var(--green-mid); border-radius:6px; background:var(--green-pale); }
+    .add-wrap.drop-here::after { content:'Rilascia per inserire l’immagine'; position:absolute;
+      font-size:12px; font-weight:600; color:var(--green-dark); }
+    .add-wrap.drop-here .add-trigger { opacity:0; }
     .add-menu { position:absolute; top:26px; left:50%; transform:translateX(-50%); z-index:20;
       background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius);
       box-shadow:0 14px 40px rgba(0,0,0,.16); padding:14px; width:520px; }

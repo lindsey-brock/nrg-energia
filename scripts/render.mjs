@@ -158,14 +158,19 @@ function renderBlock(block, post, lang) {
         '        </div>',
       ].join('\n');
     case 'figure': {
-      if (!post.inlineImage) return '';
+      // each figure carries its own image; older posts fall back to the single
+      // post-level inlineImage they were written against
       const L = post[lang];
+      const id = block.image || post.inlineImage;
+      if (!id) return '';
+      const alt = block.alt ?? L.inlineAlt ?? '';
+      const caption = block.caption ?? L.inlineCaption ?? '';
       return [
         '        <figure class="article-inline-figure">',
-        `          <img src="${img(post.inlineImage, 1200)}" alt="${escAttr(L.inlineAlt || '')}" loading="lazy" decoding="async">`,
-        `          <figcaption>${esc(L.inlineCaption || '')}</figcaption>`,
+        `          <img src="${img(id, 1200)}" alt="${escAttr(alt)}" loading="lazy" decoding="async">`,
+        caption ? `          <figcaption>${esc(caption)}</figcaption>` : null,
         '        </figure>',
-      ].join('\n');
+      ].filter(Boolean).join('\n');
     }
     default:
       return '';

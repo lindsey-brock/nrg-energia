@@ -133,6 +133,18 @@ from the section headings, the related service is a dropdown, and the regulatory
 references box takes `text | linked text | trailing text`. The contact card is
 fixed.
 
+Dropping a photo into the gap between two blocks inserts a new image there —
+the gap opens up and shows a drop cue while you drag over it. Each image block
+carries its own photo, so a post can hold as many supplementary images as it
+needs.
+
+Structural edits — adding, deleting, reordering blocks and sections — are
+applied to **both** languages. "Genera versione inglese" pairs blocks by
+position, so if Italian and English drifted apart the translation would start
+writing into the wrong blocks. Images are set on both sides too, since a photo
+belongs to the post rather than to one language; captions and alt text stay
+per-language.
+
 Dropping an image onto a figure replaces it; dropping onto empty canvas replaces
 the hero image. Uploads are signed server-side so the Cloudinary secret never
 reaches the browser. "Scegli dalla libreria" lists what is already in the

@@ -56,6 +56,45 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   const root = h('div', { class: 'canvas' });
   const touch = () => onDirty && onDirty();
 
+  // Blocks are stored per language, and "Genera versione inglese" pairs them by
+  // index — so structural edits have to happen on both sides or translation
+  // starts writing into the wrong block.
+  const otherData = () => post[lang === 'it' ? 'en' : 'it'];
+  const mirrorOf = (section) => {
+    const i = langData.sections.indexOf(section);
+    return i < 0 ? null : otherData()?.sections?.[i] ?? null;
+  };
+
+  function insertBlock(section, index, block) {
+    const at = index === null || index < 0 ? section.blocks.length : index;
+    section.blocks.splice(at, 0, block);
+    const m = mirrorOf(section);
+    if (m) m.blocks.splice(Math.min(at, m.blocks.length), 0, structuredClone(block));
+  }
+  function removeBlock(section, block) {
+    const i = section.blocks.indexOf(block);
+    if (i < 0) return;
+    section.blocks.splice(i, 1);
+    const m = mirrorOf(section);
+    if (m && m.blocks[i]) m.blocks.splice(i, 1);
+  }
+  function moveBlock(section, from, to) {
+    const [moved] = section.blocks.splice(from, 1);
+    section.blocks.splice(to, 0, moved);
+    const m = mirrorOf(section);
+    if (m && m.blocks[from]) {
+      const [mm] = m.blocks.splice(from, 1);
+      m.blocks.splice(Math.min(to, m.blocks.length), 0, mm);
+    }
+  }
+  /** An image belongs to the post, not to one language: set it on both sides. */
+  function setBlockImage(section, block, publicId) {
+    block.image = publicId;
+    const m = mirrorOf(section);
+    const i = section.blocks.indexOf(block);
+    if (m && m.blocks[i]?.type === 'figure') m.blocks[i].image = publicId;
+  }
+
   // ── persistent formatting toolbar ─────────────────────────────────────────
   // Pinned above the canvas rather than floating on selection, so the controls
   // are always in the same place. execCommand is deprecated but remains the
@@ -229,7 +268,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     wrap.append(h('button', {
       class: 'blk-del', title: 'Elimina blocco',
       onclick: () => {
-        section.blocks.splice(section.blocks.indexOf(block), 1);
+        removeBlock(section, block);
         touch(); paint();
       },
     }, ['×']));
@@ -304,23 +343,24 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         ]);
         break;
       case 'figure': {
-        const id = post.inlineImage;
+        const id = block.image || post.inlineImage;
+        if (block.caption === undefined && langData.inlineCaption) block.caption = langData.inlineCaption;
         body = h('figure', { class: 'article-inline-figure' }, [
           id ? h('img', { src: cloudinary(id, 900), alt: '' })
-             : h('div', { class: 'img-empty' }, ['Trascina un’immagine qui']),
-          editable('figcaption', langData.inlineCaption, (v) => { langData.inlineCaption = v; }),
+             : h('div', { class: 'img-empty' }, [lang === 'it' ? 'Trascina un’immagine qui' : 'Drag an image here']),
+          editable('figcaption', block.caption ?? '', (v) => { block.caption = v; }),
         ]);
         body.append(h('button', {
           class: 'pick-btn',
-          onclick: () => openLibrary((publicId) => { post.inlineImage = publicId; touch(); paint(); }),
-        }, ['Scegli dalla libreria']));
+          onclick: () => openLibrary((publicId) => { setBlockImage(section, block, publicId); touch(); paint(); }),
+        }, [lang === 'it' ? 'Scegli dalla libreria' : 'Choose from library']));
         body.addEventListener('dragover', (e) => { e.preventDefault(); body.classList.add('drop'); });
         body.addEventListener('dragleave', () => body.classList.remove('drop'));
         body.addEventListener('drop', async (e) => {
           e.preventDefault(); e.stopPropagation();
           body.classList.remove('drop');
           const file = e.dataTransfer.files[0];
-          if (file) await handleDrop(file, (publicId) => { post.inlineImage = publicId; paint(); });
+          if (file) await handleDrop(file, (publicId) => { setBlockImage(section, block, publicId); paint(); });
         });
         break;
       }
@@ -346,15 +386,14 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       e.preventDefault(); wrap.classList.remove('over');
       const from = Number(e.dataTransfer.getData('text/plain'));
       if (Number.isNaN(from) || from === index) return;
-      const [moved] = section.blocks.splice(from, 1);
-      section.blocks.splice(index, 0, moved);
+      moveBlock(section, from, index);
       touch(); paint();
     });
 
     return wrap;
   }
 
-  // ── upload plumbing ───────────────────────────────────────────────────────
+  // ── upload plumbing (used by figures and by the gaps between blocks) ──────
   let uploadNotice = null;
   async function handleDrop(file, apply) {
     if (!file.type.startsWith('image/')) return;
@@ -458,6 +497,27 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     const trigger = h('button', { class: 'add-trigger', title: lang === 'it' ? 'Aggiungi elemento' : 'Add element' }, ['+']);
     const wrap = h('div', { class: 'add-wrap' }, [trigger]);
 
+    // dropping a photo into the gap inserts an image block right there
+    wrap.addEventListener('dragover', (e) => {
+      if (!e.dataTransfer.types.includes('Files')) return;
+      e.preventDefault(); e.stopPropagation();
+      wrap.classList.add('drop-here');
+    });
+    wrap.addEventListener('dragleave', () => wrap.classList.remove('drop-here'));
+    wrap.addEventListener('drop', async (e) => {
+      if (!e.dataTransfer.types.includes('Files')) return;
+      e.preventDefault(); e.stopPropagation();
+      wrap.classList.remove('drop-here');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      await handleDrop(file, (publicId) => {
+        const block = makeBlock('figure');
+        block.image = publicId;
+        insertBlock(section, atIndex, block);
+        paint();
+      });
+    });
+
     trigger.addEventListener('click', (e) => {
       e.stopPropagation();
       if (openMenu?.dataset.owner === String(atIndex) && openMenu.parentElement === wrap) { closeMenu(); return; }
@@ -480,9 +540,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         class: 'add-card',
         onmousedown: (e) => e.preventDefault(),   // keep the caret where it is
         onclick: () => {
-          const block = makeBlock(type);
-          if (atIndex === null || atIndex < 0) section.blocks.push(block);
-          else section.blocks.splice(atIndex, 0, block);
+          insertBlock(section, atIndex, makeBlock(type));
           closeMenu(); touch(); paint();
         },
       }, [
@@ -529,7 +587,10 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
           class: 'sec-del', title: 'Elimina sezione',
           onclick: () => {
             if (!confirm('Eliminare questa sezione e tutti i suoi blocchi?')) return;
-            langData.sections.splice(si, 1); touch(); paint();
+            const m = otherData()?.sections;
+            langData.sections.splice(si, 1);
+            if (m && m[si]) m.splice(si, 1);
+            touch(); paint();
           },
         }, ['Elimina sezione']),
       ]));
@@ -545,11 +606,13 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     root.append(h('button', {
       class: 'add-section',
       onclick: () => {
-        langData.sections.push({
+        const fresh = {
           id: `sezione-${langData.sections.length + 1}`,
-          heading: 'Nuova sezione',
+          heading: lang === 'it' ? 'Nuova sezione' : 'New section',
           blocks: [{ type: 'p', html: '' }],
-        });
+        };
+        langData.sections.push(fresh);
+        otherData()?.sections?.push(structuredClone(fresh));
         touch(); paint();
       },
     }, ['+ Aggiungi sezione']));
