@@ -218,7 +218,7 @@
     .preview-overlay { position:fixed; inset:0; z-index:120; background:rgba(10,25,18,.72);
                        display:flex; flex-direction:column; padding:18px; gap:12px; }
     .preview-bar { display:flex; align-items:center; gap:10px; background:var(--white);
-                   border-radius:50px; padding:8px 10px 8px 18px; flex:none; }
+                   border-radius:50px; padding:8px 12px 8px 18px; flex:none; }
     .pv-widths { display:inline-flex; background:var(--off-white); border-radius:50px; padding:3px; gap:2px; }
     .pv-widths button { font-family:'DM Sans',sans-serif; font-size:12.5px; border:none; background:none;
                         color:var(--text-mid); padding:5px 13px; border-radius:50px; cursor:pointer; }
@@ -226,6 +226,11 @@
     .preview-stage { flex:1; min-height:0; width:100%; margin:0 auto; background:var(--white);
                      border-radius:var(--radius); overflow:hidden; transition:max-width .18s; }
     .preview-frame { width:100%; height:100%; border:0; display:block; background:#fff; }
+    .pv-close { width:32px; height:32px; flex:none; border:none; border-radius:50%;
+                background:none; color:var(--text-mid); font-size:22px; line-height:1;
+                cursor:pointer; display:flex; align-items:center; justify-content:center;
+                transition:.15s; }
+    .pv-close:hover { background:var(--off-white); color:var(--text-dark); }
 
     /* Connessioni — a form per platform */
     .conn-card { display:flex; flex-direction:column; }
@@ -443,7 +448,7 @@
 
     .list-row { display:flex; align-items:center; gap:16px; }
     .list-row img { width:76px; height:52px; object-fit:cover; border-radius:6px; background:var(--warm-gray); flex-shrink:0; }
-    .list-row .grow { flex:1; min-width:0; }
+    .grow { flex:1; min-width:0; }
     .pill { display:inline-block; font-size:10px; font-weight:700; letter-spacing:.6px; text-transform:uppercase;
             padding:3px 10px; border-radius:50px; background:var(--green-pale); color:var(--green-dark); }
     .pill.blue { background:#e6f0fb; color:var(--blue); }
@@ -791,7 +796,8 @@ function openPreview(html, lang) {
       el('span', { class: 'pill grey', html: lang.toUpperCase() }),
       el('span', { class: 'grow' }),
       el('div', { class: 'pv-widths' }, widthBtns),
-      el('button', { class: 'btn btn-ghost btn-sm', onclick: close }, ['Chiudi']),
+      el('button', { class: 'pv-close', title: 'Chiudi anteprima',
+        'aria-label': 'Chiudi anteprima', onclick: close }, ['×']),
     ]),
     stage,
   ]);
