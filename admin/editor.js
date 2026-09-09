@@ -47,46 +47,104 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   const root = h('div', { class: 'canvas' });
   const touch = () => onDirty && onDirty();
 
-  // ── inline formatting toolbar ─────────────────────────────────────────────
-  // Appears over a text selection inside the canvas. execCommand is deprecated
-  // but remains the only thing that reliably edits a contenteditable selection.
-  let bar = null;
-  function hideBar() { bar?.remove(); bar = null; }
+  // ── persistent formatting toolbar ─────────────────────────────────────────
+  // Pinned above the canvas rather than floating on selection, so the controls
+  // are always in the same place. execCommand is deprecated but remains the
+  // only thing that reliably edits a contenteditable selection.
+  let activeEditable = null;
 
   function normalise(node) {
     // Chrome emits <b>/<i>; the site styles <strong>/<em>
     node.querySelectorAll('b').forEach((el) => el.replaceWith(h('strong', { html: el.innerHTML })));
     node.querySelectorAll('i').forEach((el) => el.replaceWith(h('em', { html: el.innerHTML })));
     node.querySelectorAll('[style]').forEach((el) => el.removeAttribute('style'));
+    node.querySelectorAll('a').forEach((el) => {
+      el.setAttribute('target', '_blank');
+      el.setAttribute('rel', 'noopener noreferrer');
+    });
   }
 
-  function showBar(host) {
-    const sel = window.getSelection();
-    if (!sel || sel.isCollapsed || !host.contains(sel.anchorNode)) { hideBar(); return; }
-    hideBar();
-    const rect = sel.getRangeAt(0).getBoundingClientRect();
+  const TOOLS = {
+    it: { bold: 'Grassetto', italic: 'Corsivo', link: 'Inserisci link', unlink: 'Rimuovi link',
+          clear: 'Togli formattazione', hint: 'Seleziona del testo per formattarlo' },
+    en: { bold: 'Bold', italic: 'Italic', link: 'Insert link', unlink: 'Remove link',
+          clear: 'Clear formatting', hint: 'Select text to format it' },
+  };
+
+  function buildToolbar() {
+    const t = TOOLS[lang];
+    const bar = h('div', { class: 'fmt-toolbar' });
+
+    // mousedown + preventDefault keeps the selection alive through the click
     const cmd = (name, arg) => (e) => {
       e.preventDefault();
+      if (!activeEditable) return;
       document.execCommand(name, false, arg);
-      normalise(host);
-      host.dispatchEvent(new Event('input', { bubbles: true }));
+      normalise(activeEditable);
+      activeEditable.dispatchEvent(new Event('input', { bubbles: true }));
+      syncState();
     };
-    bar = h('div', { class: 'fmt-bar' }, [
-      h('button', { title: 'Grassetto', onmousedown: cmd('bold') }, ['B']),
-      h('button', { class: 'ital', title: 'Corsivo', onmousedown: cmd('italic') }, ['I']),
-      h('button', {
-        title: 'Link',
-        onmousedown: (e) => {
-          e.preventDefault();
-          const url = prompt(lang === 'it' ? 'Indirizzo del link' : 'Link address', 'https://');
-          if (url) cmd('createLink', url)(e);
-        },
-      }, ['🔗']),
-      h('button', { title: lang === 'it' ? 'Togli formattazione' : 'Clear', onmousedown: cmd('removeFormat') }, ['⌫']),
-    ]);
-    document.body.append(bar);
-    bar.style.top = `${window.scrollY + rect.top - bar.offsetHeight - 8}px`;
-    bar.style.left = `${window.scrollX + rect.left + rect.width / 2 - bar.offsetWidth / 2}px`;
+
+    const btn = (label, title, name, cls = '') => h('button', {
+      class: `fmt-btn ${cls}`, title, 'data-cmd': name, onmousedown: cmd(name),
+    }, [label]);
+
+    const boldBtn = btn('B', t.bold, 'bold', 'bold');
+    const italBtn = btn('I', t.italic, 'italic', 'ital');
+
+    const linkBtn = h('button', {
+      class: 'fmt-btn', title: t.link,
+      onmousedown: (e) => {
+        e.preventDefault();
+        if (!activeEditable) return;
+        const url = prompt(t.link, 'https://');
+        if (!url) return;
+        document.execCommand('createLink', false, url);
+        normalise(activeEditable);
+        activeEditable.dispatchEvent(new Event('input', { bubbles: true }));
+      },
+    }, ['🔗']);
+
+    bar.append(
+      boldBtn, italBtn, linkBtn,
+      btn('⌦', t.unlink, 'unlink'),
+      h('span', { class: 'fmt-sep' }),
+      btn('⌫', t.clear, 'removeFormat'),
+      h('span', { class: 'fmt-hint' }, [t.hint]),
+    );
+
+    function syncState() {
+      for (const b of bar.querySelectorAll('.fmt-btn[data-cmd]')) {
+        const name = b.dataset.cmd;
+        if (name !== 'bold' && name !== 'italic') continue;
+        let on = false;
+        try { on = document.queryCommandState(name); } catch { /* ignore */ }
+        b.classList.toggle('on', on);
+      }
+      bar.classList.toggle('armed', Boolean(activeEditable));
+    }
+
+    function editableFromSelection() {
+      const sel = window.getSelection();
+      if (!sel || !sel.anchorNode) return null;
+      const start = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+      const host = start?.closest?.('[contenteditable="true"]');
+      return host && root.contains(host) ? host : null;
+    }
+
+    // focusin bubbles, unlike focus, and covers clicking straight into a block
+    root.addEventListener('focusin', (e) => {
+      const host = e.target.closest?.('[contenteditable="true"]');
+      if (host) { activeEditable = host; syncState(); }
+    });
+
+    document.addEventListener('selectionchange', () => {
+      const host = editableFromSelection();
+      if (host) activeEditable = host;
+      else if (activeEditable && !root.contains(activeEditable)) activeEditable = null;
+      syncState();
+    });
+    return bar;
   }
 
   // ── inline editable ───────────────────────────────────────────────────────
@@ -99,9 +157,6 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       const text = (e.clipboardData || window.clipboardData).getData('text/plain');
       document.execCommand('insertText', false, text);
     });
-    n.addEventListener('mouseup', () => setTimeout(() => showBar(n), 0));
-    n.addEventListener('keyup', (e) => { if (e.shiftKey || e.key === 'ArrowLeft' || e.key === 'ArrowRight') showBar(n); });
-    n.addEventListener('blur', () => setTimeout(hideBar, 150));
     return n;
   }
 
@@ -410,5 +465,5 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   });
 
   paint();
-  return { el: root, repaint: paint };
+  return { el: root, toolbar: buildToolbar(), repaint: paint };
 }

@@ -82,13 +82,20 @@
     .pv-img { display:block; height:100%; border-radius:3px;
       background:linear-gradient(135deg,#c9d6cd 0%,#9db3a6 60%,#7d94a8 100%); }
 
-    /* selection formatting bar */
-    .fmt-bar { position:absolute; z-index:60; display:flex; gap:2px; padding:4px;
-      background:#1a1a18; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,.3); }
-    .fmt-bar button { background:none; border:none; color:#fff; cursor:pointer; font-size:13px;
-      width:28px; height:26px; border-radius:5px; font-family:'DM Sans',sans-serif; font-weight:700; }
-    .fmt-bar button:hover { background:rgba(255,255,255,.16); }
-    .fmt-bar button.ital { font-style:italic; font-weight:500; }
+    /* formatting toolbar, pinned above the scrolling canvas */
+    .fmt-rail { position:sticky; top:0; z-index:30; background:var(--off-white); padding:10px 0 8px; }
+    .fmt-toolbar { display:flex; align-items:center; gap:3px; padding:7px 10px;
+      background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius-sm);
+      box-shadow:0 2px 10px rgba(0,0,0,.05); }
+    .fmt-btn { background:none; border:none; color:var(--text-mid); cursor:pointer; font-size:14px;
+      min-width:32px; height:30px; border-radius:6px; font-family:'DM Sans',sans-serif; font-weight:700;
+      transition:background .15s, color .15s; }
+    .fmt-btn:hover { background:var(--off-white); color:var(--text-dark); }
+    .fmt-btn.on { background:var(--green-pale); color:var(--green-dark); }
+    .fmt-btn.ital { font-style:italic; font-weight:500; }
+    .fmt-sep { width:1px; height:20px; background:var(--warm-gray); margin:0 6px; }
+    .fmt-hint { margin-left:auto; font-size:11.5px; color:var(--text-light); }
+    .fmt-toolbar.armed .fmt-hint { visibility:hidden; }
     .add-btn, .add-section { font-family:'DM Sans',sans-serif; font-size:12.5px; background:var(--off-white);
       border:1px solid var(--warm-gray); color:var(--text-mid); border-radius:50px; padding:6px 14px; cursor:pointer; }
     .add-btn:hover, .add-section:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
@@ -220,7 +227,9 @@
       padding:5px 0; cursor:pointer; display:block; font-family:'DM Sans',sans-serif; text-decoration:none; }
     .side-foot a:hover, .side-foot button:hover { color:#fff; }
 
-    main.work { padding:34px 40px 64px; max-width:1180px; overflow-x:hidden; }
+    /* clip, not hidden: overflow:hidden makes this a scroll container and
+       stops position:sticky working for the toolbar inside it */
+    main.work { padding:34px 40px 64px; max-width:1180px; overflow-x:clip; }
     .work h2.title { font-family:'Syne',sans-serif; font-size:26px; font-weight:700; letter-spacing:-.01em; }
     .work p.lede { font-size:14.5px; color:var(--text-mid); margin-bottom:26px; }
     .head-row { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; flex-wrap:wrap; }
@@ -629,12 +638,13 @@ function openPostEditor(post, { isNew = false } = {}) {
 
   function mountCanvas() {
     canvasHost.innerHTML = '';
-    const { el: canvasEl } = createCanvas({
+    const { el: canvasEl, toolbar } = createCanvas({
       lang, langData: draft[lang], post: draft,
       onDirty: () => { dirty = true; saveBtn.disabled = false; queueSeo(); },
       uploadImage,
     });
-    canvasHost.append(canvasEl);
+    // the bar stays put; the article scrolls underneath it
+    canvasHost.append(el('div', { class: 'fmt-rail' }, [toolbar]), canvasEl);
   }
 
   for (const [code, label] of [['it', 'Italiano'], ['en', 'English']]) {

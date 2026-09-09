@@ -91,9 +91,16 @@ It opens a menu showing a miniature of each one — body text, sub-heading
 what you are inserting before you insert it. Choosing from a **+** between two
 blocks drops the new element at that point rather than at the end.
 
-Selecting text inside the canvas raises a formatting bar: bold, italic, link and
-clear. Chrome emits `<b>`/`<i>`, which the site does not style, so those are
-rewritten to `<strong>`/`<em>` and inline `style` attributes are stripped. The article title is the page's only H1 — one per
+A formatting toolbar is pinned above the canvas — bold, italic, link, remove
+link, clear — and the article scrolls underneath it. It releases once you scroll
+past the end of the article into the metadata.
+
+The toolbar acts on whichever block holds the current selection, derived from
+`selectionchange` and `focusin` rather than a focus listener, which does not
+re-fire on an already-focused element. Chrome emits `<b>`/`<i>`, which the site
+does not style, so the result is rewritten to `<strong>`/`<em>`, inline `style`
+attributes are stripped, and links get `target="_blank"` with
+`rel="noopener noreferrer"`. The article title is the page's only H1 — one per
 page is what search engines expect — so body headings start at H2 (the section
 titles) with H3/H4 beneath.
 
