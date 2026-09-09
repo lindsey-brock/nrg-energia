@@ -9,7 +9,7 @@
 
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -47,6 +47,11 @@ const readBody = (req) => new Promise((resolve) => {
   req.on('end', () => { try { resolve(raw ? JSON.parse(raw) : {}); } catch { resolve({}); } });
 });
 
+const REWRITES = (() => {
+  try { return JSON.parse(readFileSync(join(ROOT, 'vercel.json'), 'utf8')).rewrites || []; }
+  catch { return []; }
+})();
+
 createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   let path = decodeURIComponent(url.pathname);
@@ -54,16 +59,22 @@ createServer(async (req, res) => {
   // ── API ───────────────────────────────────────────────────────────────────
   if (path.startsWith('/api/')) {
     let file = join(ROOT, `${path}.js`);
-    let segments = null;
+    const extra = {};
 
-    // Vercel-style catch-all: with no exact file, walk up looking for
-    // [...path].js and hand it the remaining segments, the way the platform
-    // routes /api/admin/media to api/admin/[...path].js.
+    // No file for this path: apply vercel.json rewrites, as the platform does
+    // once the filesystem misses. This is what routes /api/admin/media to
+    // api/admin-router with ?route=media.
     if (!existsSync(file)) {
-      const parts = path.slice('/api/'.length).split('/').filter(Boolean);
-      for (let i = parts.length - 1; i >= 0; i--) {
-        const candidate = join(ROOT, 'api', ...parts.slice(0, i), '[...path].js');
-        if (existsSync(candidate)) { file = candidate; segments = parts.slice(i); break; }
+      for (const rule of REWRITES) {
+        const names = [];
+        const re = new RegExp(`^${rule.source.replace(/:(\w+)/g, (_, n) => { names.push(n); return '([^/]+)'; })}$`);
+        const m = path.match(re);
+        if (!m) continue;
+        const params = Object.fromEntries(names.map((n, i) => [n, m[i + 1]]));
+        const dest = new URL(rule.destination.replace(/:(\w+)/g, (_, n) => params[n] ?? ''), 'http://x');
+        for (const [k, v] of dest.searchParams) extra[k] = v;
+        file = join(ROOT, `${dest.pathname}.js`);
+        break;
       }
     }
 
@@ -71,7 +82,7 @@ createServer(async (req, res) => {
     try {
       const mod = await import(`${pathToFileURL(file).href}?t=${Date.now()}`); // fresh each request
       shim(req, res, url, await readBody(req));
-      if (segments) req.query.path = segments;
+      Object.assign(req.query, extra);
       await mod.default(req, res);
     } catch (err) {
       console.error(`[api] ${path}:`, err);
