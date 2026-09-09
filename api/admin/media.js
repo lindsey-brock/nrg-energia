@@ -37,6 +37,13 @@ const PAGES = [
   'services/en/asbestos-removal.html', 'services/en/electrical-systems.html',
 ];
 
+// Site furniture rather than photographs of work: it appears on the site, so
+// the scan finds it, but nobody wants it as a cover or in a gallery.
+const NOT_LIBRARY = [
+  /(^|\/)map-imola/i,      // the map strip behind the footer address
+];
+const isLibraryImage = (id) => !NOT_LIBRARY.some((re) => re.test(id));
+
 const thumbFor = (id) =>
   `https://res.cloudinary.com/${CLOUD}/image/upload/c_fill,g_auto,h_120,w_180,q_auto,f_auto/${id}`;
 
@@ -56,6 +63,7 @@ export async function imagesInUse() {
   }
 
   return [...ids]
+    .filter(isLibraryImage)
     // newest version first, so recent uploads lead
     .sort((a, b) => Number(b.slice(1, b.indexOf('/'))) - Number(a.slice(1, a.indexOf('/'))))
     .map((id) => ({
@@ -80,13 +88,15 @@ async function imagesInAccount(key, secret, limit, cursor) {
 
   return {
     cursor: body.next_cursor || null,
-    images: (body.resources || []).map((x) => {
-      const id = `v${x.version}/${x.public_id}.${x.format}`;
-      return {
-        id, publicId: x.public_id, width: x.width, height: x.height,
-        bytes: x.bytes, createdAt: x.created_at, source: 'cloudinary', thumb: thumbFor(id),
-      };
-    }),
+    images: (body.resources || [])
+      .map((x) => {
+        const id = `v${x.version}/${x.public_id}.${x.format}`;
+        return {
+          id, publicId: x.public_id, width: x.width, height: x.height,
+          bytes: x.bytes, createdAt: x.created_at, source: 'cloudinary', thumb: thumbFor(id),
+        };
+      })
+      .filter((i) => isLibraryImage(i.id)),
   };
 }
 
