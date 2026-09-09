@@ -213,6 +213,8 @@
     .lib-item:hover { border-color:var(--green-mid); box-shadow:0 4px 14px rgba(0,0,0,.1); }
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
+    .lib-note { font-size:12px; color:var(--text-light); padding:0 20px 16px; margin:0;
+                border-top:1px solid var(--warm-gray); padding-top:12px; }
 
     /* article preview */
     .preview-overlay { position:fixed; inset:0; z-index:120; background:rgba(10,25,18,.72);
@@ -1205,18 +1207,15 @@ function pickFromLibrary(onPick) {
 
   api('media?limit=60').then((r) => {
     grid.innerHTML = '';
-    if (!r.configured) {
-      grid.append(el('div', { class: 'lib-empty',
-        html: `Libreria non disponibile: mancano ${r.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }));
-      return;
-    }
-    if (!r.images.length) { grid.append(el('div', { class: 'lib-empty', html: 'Nessuna immagine.' })); return; }
+    if (!r.images?.length) { grid.append(el('div', { class: 'lib-empty', html: 'Nessuna immagine.' })); return; }
     for (const im of r.images) {
       grid.append(el('button', {
         class: 'lib-item', title: im.publicId,
         onclick: () => { onPick(im.id); overlay.remove(); },
       }, [el('img', { src: im.thumb, alt: '', loading: 'lazy' })]));
     }
+    // browsing works without credentials; only uploading needs them
+    if (r.note) grid.after(el('p', { class: 'lib-note', html: esc(r.note) }));
   }).catch((err) => {
     grid.innerHTML = '';
     grid.append(el('div', { class: 'lib-empty', html: esc(err.message) }));
@@ -1248,18 +1247,22 @@ function attachDrop(node, onId, notice) {
 }
 
 /** Large single image with drag-drop, library pick and remove. */
-function imageField(label, current, onChange, notice) {
+function imageField(label, initial, onChange, notice) {
   const wrap = el('div', { class: 'img-field' });
+  // the parameter is only the starting value; every change has to update this
+  // local too, or the redraw paints the image that was there before
+  let current = initial;
+  const set = (id) => { current = id; onChange(id); render(); };
   const render = () => {
     wrap.innerHTML = '';
     wrap.append(el('div', { class: 'img-field-head' }, [
       el('label', { class: 'f', style: 'margin:0' }, [label]),
       el('div', { style: 'display:flex;gap:6px' }, [
         el('button', { class: 'pick-btn', style: 'margin:0',
-          onclick: () => pickFromLibrary((id) => { onChange(id); render(); }) },
+          onclick: () => pickFromLibrary(set) },
           [current ? 'Sostituisci' : 'Scegli dalla libreria']),
         current ? el('button', { class: 'pick-btn danger', style: 'margin:0',
-          onclick: () => { onChange(''); render(); } }, ['Rimuovi']) : null,
+          onclick: () => set('') }, ['Rimuovi']) : null,
       ]),
     ]));
     const zone = current
@@ -1268,7 +1271,7 @@ function imageField(label, current, onChange, notice) {
           el('span', { html: '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>' }),
           el('span', {}, ['Trascina un’immagine qui, o scegline una dalla libreria']),
         ]);
-    attachDrop(zone, (id) => { onChange(id); render(); }, notice);
+    attachDrop(zone, set, notice);
     wrap.append(zone);
   };
   render();

@@ -727,19 +727,15 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     try {
       const r = await fetch('/api/admin/media?limit=60').then((x) => x.json());
       grid.innerHTML = '';
-      if (!r.configured) {
-        grid.append(h('div', { class: 'lib-empty' }, [
-          `Libreria non disponibile: mancano ${r.missing.join(', ')}.`,
-        ]));
-        return;
-      }
-      if (!r.images.length) { grid.append(h('div', { class: 'lib-empty' }, ['Nessuna immagine.'])); return; }
+      if (!r.images?.length) { grid.append(h('div', { class: 'lib-empty' }, ['Nessuna immagine.'])); return; }
       for (const im of r.images) {
         grid.append(h('button', {
           class: 'lib-item', title: im.publicId,
           onclick: () => { pick(im.id); overlay.remove(); },
         }, [h('img', { src: im.thumb, alt: '', loading: 'lazy' })]));
       }
+      // browsing works without credentials; only uploading needs them
+      if (r.note) panel.append(h('p', { class: 'lib-note' }, [r.note]));
     } catch (err) {
       grid.innerHTML = '';
       grid.append(h('div', { class: 'lib-empty' }, [err.message]));
