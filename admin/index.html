@@ -959,7 +959,10 @@ function field(label, value, onInput, kind = 'input', options = []) {
   let input;
   if (kind === 'select') {
     input = el('select', { class: 'f' });
-    for (const o of options) input.append(el('option', { value: o, selected: o === value ? '' : null }, [o]));
+    for (const o of options) {
+      const v = o?.value ?? o;
+      input.append(el('option', { value: v, selected: v === value ? '' : null }, [o?.label ?? o]));
+    }
   } else if (kind === 'textarea') {
     input = el('textarea', { class: 'f' });
     input.value = value ?? '';
@@ -975,6 +978,16 @@ function field(label, value, onInput, kind = 'input', options = []) {
 
 // ── portfolio ──────────────────────────────────────────────────────────────
 let portfolioDoc = null;
+
+// Category, badge colour and the visible label were three fields for one
+// choice: the trade. Picking the trade sets all of them.
+//   category → the filter on /portfolio      badge → the tag's colour class
+//   it/en    → the label printed on the card in each language
+const TRADES = [
+  { category: 'fotovoltaico', badge: 'solar',    it: 'Fotovoltaico', en: 'Solar Panel systems' },
+  { category: 'coperture',    badge: 'roofing',  it: 'Coperture',    en: 'Roofing' },
+  { category: 'amianto',      badge: 'asbestos', it: 'Amianto',      en: 'Asbestos removal' },
+];
 
 VIEWS.portfolio = async (root) => {
   header(root, 'Portfolio', 'I lavori mostrati su /portfolio. Le modifiche sono salvate in content/portfolio.json.',
@@ -1127,10 +1140,11 @@ function galleryField(label, list, onChange, notice) {
 function openProjectEditor(project) {
   const isNew = !project;
   const draft = project ? structuredClone(project) : {
-    id: `project-${Date.now().toString(36)}`, published: true, category: 'fotovoltaico', badge: 'solar',
+    id: `project-${Date.now().toString(36)}`, published: true,
+    category: TRADES[0].category, badge: TRADES[0].badge,
     image: '', images: [],
-    it: { tag: 'Fotovoltaico', title: '', location: '', description: '' },
-    en: { tag: 'Solar Power', title: '', location: '', description: '' },
+    it: { tag: TRADES[0].it, title: '', location: '', description: '' },
+    en: { tag: TRADES[0].en, title: '', location: '', description: '' },
   };
 
   work.innerHTML = '';
@@ -1151,6 +1165,7 @@ function openProjectEditor(project) {
         lang = code;
         [...langSwitch.children].forEach((b) => b.classList.toggle('active', b === e.target));
         titleEl.textContent = draft[lang].title || (isNew ? 'Nuovo lavoro' : 'Lavoro');
+        paintTrade();
         paintText();
       },
     }, [label]));
@@ -1158,10 +1173,24 @@ function openProjectEditor(project) {
   const msg = el('div', { class: 'msg' }); work.append(msg);
 
   const shared = el('div', { class: 'card' }, [el('h3', { html: 'Impostazioni' })]);
-  shared.append(el('div', { class: 'row-2', style: 'margin-top:14px' }, [
-    field('Categoria', draft.category, (v) => { draft.category = v; }, 'select', ['fotovoltaico', 'coperture', 'amianto']),
-    field('Colore etichetta', draft.badge, (v) => { draft.badge = v; }, 'select', ['solar', 'roofing', 'asbestos']),
-  ]));
+  const tradeHost = el('div', { style: 'margin-top:14px;max-width:420px' });
+  const paintTrade = () => {
+    tradeHost.innerHTML = '';
+    tradeHost.append(field(
+      lang === 'it' ? 'Categoria' : 'Category',
+      draft.category,
+      (v) => {
+        const t = TRADES.find((x) => x.category === v);
+        draft.category = t.category;
+        draft.badge = t.badge;          // colour class on the card
+        draft.it.tag = t.it;            // label, in both languages
+        draft.en.tag = t.en;
+      },
+      'select',
+      TRADES.map((t) => ({ value: t.category, label: t[lang] })),
+    ));
+  };
+  shared.append(tradeHost);
   const imgNotice = el('div', { class: 'canvas-notice' });
   shared.append(imgNotice);
   draft.images = draft.images || [];
@@ -1177,17 +1206,19 @@ function openProjectEditor(project) {
   const paintText = () => {
     textCard.innerHTML = '';
     textCard.append(el('h3', { html: lang === 'it' ? 'Testi — Italiano' : 'Testi — English' }));
-    const titleField = field('Titolo', draft[lang].title, (v) => {
+    const titleField = field(lang === 'it' ? 'Titolo' : 'Title', draft[lang].title, (v) => {
       draft[lang].title = v;
       titleEl.textContent = v || 'Lavoro';
     });
     textCard.append(el('div', { class: 'row-2', style: 'margin-top:14px' }, [
-      field('Etichetta', draft[lang].tag, (v) => { draft[lang].tag = v; }),
-      field('Località', draft[lang].location, (v) => { draft[lang].location = v; }),
+      titleField,
+      field(lang === 'it' ? 'Località' : 'Location', draft[lang].location,
+        (v) => { draft[lang].location = v; }),
     ]));
-    textCard.append(titleField);
-    textCard.append(field('Descrizione', draft[lang].description, (v) => { draft[lang].description = v; }, 'textarea'));
+    textCard.append(field(lang === 'it' ? 'Descrizione' : 'Description', draft[lang].description,
+      (v) => { draft[lang].description = v; }, 'textarea'));
   };
+  paintTrade();
   paintText();
   work.append(textCard);
 
