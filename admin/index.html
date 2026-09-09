@@ -212,6 +212,40 @@
     .lib-item:hover { border-color:var(--green-mid); box-shadow:0 4px 14px rgba(0,0,0,.1); }
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
+
+    /* Andamento — map, live sessions, traffic sources */
+    .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .demo-badge { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
+                  background:#fdf5e0; color:#8a5c10; border:1px solid #f0dfae;
+                  border-radius:50px; padding:3px 9px; white-space:nowrap; }
+    .stat { position:relative; }
+    .stat .demo-badge { position:absolute; top:12px; right:12px; }
+    .panel-row { display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+    .live-count { font-family:'Syne',sans-serif; font-weight:800; font-size:44px; line-height:1;
+                  color:var(--green-dark); }
+    .spark { width:100%; height:40px; display:block; }
+    .live-row { display:flex; justify-content:space-between; align-items:center; gap:10px;
+                padding:6px 0; border-top:1px solid var(--warm-gray); font-size:13px; }
+    .map-row { display:grid; grid-template-columns:220px 1fr; gap:24px; align-items:center; margin-top:14px; }
+    /* height:auto does not derive from the viewBox here, so state the ratio */
+    .italy { width:100%; aspect-ratio:420/560; height:auto; display:block; }
+    .bar-row { display:grid; grid-template-columns:120px 1fr 44px; gap:10px; align-items:center;
+               font-size:13px; padding:3.5px 0; }
+    .bar-label { color:var(--text-mid); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .bar-track { background:var(--off-white); border-radius:50px; height:8px; overflow:hidden; }
+    .bar-fill { display:block; height:100%; background:var(--green-mid); border-radius:50px; }
+    .bar-value { text-align:right; color:var(--text-light); font-variant-numeric:tabular-nums; }
+    .stack-bar { display:flex; height:12px; border-radius:50px; overflow:hidden; margin-top:14px;
+                 background:var(--off-white); }
+    .stack-seg { display:block; }
+    .stack-seg.search, .dot.search     { background:var(--green-mid); }
+    .stack-seg.direct, .dot.direct     { background:var(--blue, #2563a8); }
+    .stack-seg.social, .dot.social     { background:var(--yellow, #f5c842); }
+    .stack-seg.referral, .dot.referral { background:var(--warm-gray); }
+    .src-row { display:flex; align-items:center; gap:11px; padding:10px 0;
+               border-bottom:1px solid var(--warm-gray); }
+    .src-row:last-child { border-bottom:none; }
+    .dot { width:10px; height:10px; border-radius:50%; flex:none; }
     @keyframes fieldFlash { from { box-shadow:0 0 0 3px var(--green-mid); } to { box-shadow:0 0 0 3px transparent; } }
     .f.flash { animation:fieldFlash 1.8s ease-out; border-color:var(--green-mid); }
 
@@ -398,7 +432,8 @@
       .side-logo, .side-tag, .side-foot { display:none; }
       nav.side-nav { flex-direction:row; }
       main.work { padding:24px 20px 48px; }
-      .lang-cols, .stat-grid, .row-2 { grid-template-columns:1fr; }
+      .lang-cols, .stat-grid, .row-2, .panel-row { grid-template-columns:1fr; }
+      .map-row { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -456,6 +491,7 @@
 </div>
 
 <script type="module">
+import { ITALY_VIEWBOX, ITALY_PATH, project } from './italy-map.js';
 import { createCanvas } from './editor.js';
 
 const $  = (s, r = document) => r.querySelector(s);
@@ -524,7 +560,7 @@ $('#nav').addEventListener('click', (e) => {
 });
 
 const VIEWS = {};
-function render() { work.innerHTML = ''; VIEWS[view](work); }
+function render() { clearInterval(liveTimer); work.innerHTML = ''; VIEWS[view](work); }
 
 function header(parent, title, lede, action) {
   parent.append(el('div', { class: 'head-row' }, [
@@ -1422,47 +1458,213 @@ VIEWS.seo = async (root) => {
 };
 
 // ── marketing ──────────────────────────────────────────────────────────────
+// ── demo data ──────────────────────────────────────────────────────────────
+// Placeholder figures for showing the dashboard before any analytics exist.
+// Every panel that renders these is badged "Dati dimostrativi": nothing here
+// should ever be mistaken for real traffic.
+const DEMO = {
+  search: { clicks: 342, impressions: 8914, ctr: 0.0384, position: 14.2 },
+  live: { now: 6, pages: [
+    { path: '/services/energie-rinnovabili', n: 2 },
+    { path: '/portfolio', n: 2 },
+    { path: '/blog/bonus-casa-2026', n: 1 },
+    { path: '/', n: 1 },
+  ] },
+  // [name, lon, lat, sessions]
+  cities: [
+    ['Imola', 11.714, 44.353, 486], ['Bologna', 11.343, 44.494, 312],
+    ['Faenza', 11.883, 44.286, 141], ['Ravenna', 12.203, 44.418, 128],
+    ['Castel San Pietro', 11.586, 44.398, 97], ['Modena', 10.925, 44.647, 88],
+    ['Forlì', 12.041, 44.222, 74], ['Ferrara', 11.619, 44.836, 61],
+    ['Rimini', 12.566, 44.060, 45], ['Firenze', 11.256, 43.770, 38],
+    ['Milano', 9.190, 45.464, 33], ['Roma', 12.496, 41.903, 21],
+  ],
+  sources: [
+    { key: 'Ricerca organica', detail: 'Google, Bing', n: 1124, tone: 'search' },
+    { key: 'Diretto',          detail: 'URL digitato, segnalibri', n: 388, tone: 'direct' },
+    { key: 'Social',           detail: 'Instagram, Facebook, LinkedIn', n: 264, tone: 'social' },
+    { key: 'Referral',         detail: 'Altri siti, elenchi locali', n: 71, tone: 'referral' },
+  ],
+};
+
+/** What each panel would need before it could show real numbers. */
+const DEMO_NEEDS = [
+  ['Click, impression, CTR, posizione', 'Google Search Console — già previsto qui, mancano solo le credenziali.'],
+  ['Mappa, sessioni attive, provenienza',
+   'Search Console non fornisce questi dati: servono statistiche di visita '
+   + '(Plausible o Umami, senza cookie e senza banner di consenso; oppure Google Analytics 4, che il banner lo richiede).'],
+];
+
+let liveTimer = null;
+
+const demoBadge = () => el('span', { class: 'demo-badge' }, ['Dati dimostrativi']);
+
+// Returns markup, not a node: document.createElement('svg') produces an
+// HTMLUnknownElement, so SVG has to go through the HTML parser to render.
+function sparkline(values, w = 260, h = 40) {
+  const max = Math.max(...values, 1);
+  const step = w / (values.length - 1);
+  const pts = values.map((v, i) => `${(i * step).toFixed(1)},${(h - (v / max) * (h - 4) - 2).toFixed(1)}`);
+  return `<svg viewBox="0 0 ${w} ${h}" class="spark" preserveAspectRatio="none">
+    <polyline points="${pts.join(' ')}" fill="none" stroke="var(--green-mid)" stroke-width="2"
+      stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+/** Live-session panel. The number drifts so the demo looks alive. */
+function livePanel() {
+  const card = el('div', { class: 'card' });
+  const history = Array.from({ length: 24 }, () => 3 + Math.round(Math.random() * 5));
+  const count = el('div', { class: 'live-count' }, [String(DEMO.live.now)]);
+  const sparkHost = el('div', { style: 'margin-top:10px', html: sparkline(history) });
+  const list = el('div', { style: 'margin-top:14px' });
+
+  const paintList = (pages) => {
+    list.innerHTML = '';
+    for (const p of pages) {
+      list.append(el('div', { class: 'live-row' }, [
+        el('code', { class: 'env', html: esc(p.path) }),
+        el('span', { class: 'meta', html: `${p.n}` }),
+      ]));
+    }
+  };
+  paintList(DEMO.live.pages);
+
+  card.append(
+    el('div', { class: 'card-head' }, [el('h3', { html: 'Sessioni attive' }), demoBadge()]),
+    el('div', { style: 'display:flex;align-items:flex-end;gap:14px;margin-top:8px' }, [
+      el('div', { class: 'grow' }, [count, el('div', { class: 'meta', html: 'in questo momento' })]),
+    ]),
+    sparkHost,
+    el('p', { class: 'meta', style: 'margin-top:16px', html: 'Pagine aperte ora' }),
+    list,
+  );
+
+  clearInterval(liveTimer);
+  liveTimer = setInterval(() => {
+    if (!document.body.contains(card)) { clearInterval(liveTimer); return; }
+    const next = Math.max(1, history[history.length - 1] + (Math.random() < 0.5 ? -1 : 1));
+    history.push(next); history.shift();
+    count.textContent = String(next);
+    sparkHost.innerHTML = sparkline(history);
+  }, 4000);
+
+  return card;
+}
+
+/** Italy, with a bubble per town sized by sessions. */
+function mapPanel() {
+  const max = Math.max(...DEMO.cities.map((c) => c[3]));
+  const bubbles = DEMO.cities.map(([name, lon, lat, n]) => {
+    const [x, y] = project(lon, lat);
+    const r = 4 + Math.sqrt(n / max) * 15;
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}"
+      fill="var(--green-mid)" fill-opacity=".38" stroke="var(--green-dark)" stroke-width="1.2">
+      <title>${esc(name)} — ${n} sessioni</title></circle>`;
+  }).join('');
+
+  const total = DEMO.cities.reduce((n, c) => n + c[3], 0);
+  const rows = DEMO.cities.slice(0, 8).map(([name, , , n]) => el('div', { class: 'bar-row' }, [
+    el('span', { class: 'bar-label', html: esc(name) }),
+    el('span', { class: 'bar-track' }, [el('span', { class: 'bar-fill', style: `width:${(n / max) * 100}%` })]),
+    el('span', { class: 'bar-value', html: String(n) }),
+  ]));
+
+  return el('div', { class: 'card' }, [
+    el('div', { class: 'card-head' }, [
+      el('h3', { html: 'Da dove arrivano' }),
+      demoBadge(),
+    ]),
+    el('p', { class: 'meta', style: 'margin-top:4px',
+      html: `${total.toLocaleString('it-IT')} sessioni · ultimi 28 giorni` }),
+    el('div', { class: 'map-row' }, [
+      el('div', { html: `<svg viewBox="${ITALY_VIEWBOX}" class="italy">
+        <path d="${ITALY_PATH}" fill="var(--off-white)" stroke="var(--warm-gray)" stroke-width="1.4"/>
+        ${bubbles}</svg>` }),
+      el('div', { class: 'grow' }, rows),
+    ]),
+  ]);
+}
+
+/** Search vs social vs direct vs referral. */
+function sourcesPanel() {
+  const total = DEMO.sources.reduce((n, s) => n + s.n, 0);
+  const bar = el('div', { class: 'stack-bar' }, DEMO.sources.map((s) =>
+    el('span', { class: `stack-seg ${s.tone}`, style: `width:${(s.n / total) * 100}%`, title: s.key })));
+
+  const rows = DEMO.sources.map((s) => el('div', { class: 'src-row' }, [
+    el('span', { class: `dot ${s.tone}` }),
+    el('div', { class: 'grow' }, [
+      el('div', { html: `<strong>${esc(s.key)}</strong>` }),
+      el('div', { class: 'meta', html: esc(s.detail) }),
+    ]),
+    el('div', { style: 'text-align:right' }, [
+      el('div', { html: `<strong>${s.n.toLocaleString('it-IT')}</strong>` }),
+      el('div', { class: 'meta', html: `${((s.n / total) * 100).toFixed(0)}%` }),
+    ]),
+  ]));
+
+  return el('div', { class: 'card' }, [
+    el('div', { class: 'card-head' }, [el('h3', { html: 'Provenienza del traffico' }), demoBadge()]),
+    bar,
+    el('div', { style: 'margin-top:6px' }, rows),
+  ]);
+}
+
 VIEWS.marketing = async (root) => {
-  header(root, 'Andamento', 'Dati di ricerca organica da Google Search Console.');
+  header(root, 'Andamento', 'Ricerca organica da Google Search Console, più le statistiche di visita.');
   const body = el('div'); root.append(body); loading(body);
   try {
     const d = await api('search-console?days=28');
     body.innerHTML = '';
-    if (!d.configured) {
-      body.append(el('div', { class: 'card' }, [
-        el('h3', { html: 'Google Search Console non è ancora collegato' }),
-        el('p', { class: 'meta', style: 'margin-top:4px',
-          html: `Mancano: ${d.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }),
-        el('ul', { class: 'setup-list', html: d.setup.map((s) => `<li>${esc(s)}</li>`).join('') }),
-      ]));
-      body.append(el('div', { class: 'stat-grid' }, ['Click', 'Impression', 'CTR', 'Posizione media']
-        .map((k) => el('div', { class: 'stat' }, [
-          el('div', { class: 'k', html: k }), el('div', { class: 'v muted', html: '—' })]))));
-      return;
-    }
-    if (d.error) { failed(body, new Error(d.error)); return; }
-    const t = d.totals;
+
+    const connected = d.configured && !d.error;
+    const t = connected ? d.totals : DEMO.search;
+
     body.append(el('div', { class: 'stat-grid' }, [
-      stat('Click', t.clicks?.toLocaleString('it-IT') ?? '0'),
-      stat('Impression', t.impressions?.toLocaleString('it-IT') ?? '0'),
+      stat('Click', (t.clicks || 0).toLocaleString('it-IT')),
+      stat('Impression', (t.impressions || 0).toLocaleString('it-IT')),
       stat('CTR', `${((t.ctr || 0) * 100).toFixed(1)}%`),
       stat('Posizione media', (t.position || 0).toFixed(1)),
     ]));
-    const rows = d.rows.map((r) => `<tr><td style="padding:7px 0">${esc(r.key)}</td>
-      <td style="text-align:right">${r.clicks}</td><td style="text-align:right">${r.impressions}</td>
-      <td style="text-align:right">${(r.ctr * 100).toFixed(1)}%</td>
-      <td style="text-align:right">${r.position.toFixed(1)}</td></tr>`).join('');
-    body.append(el('div', { class: 'card' }, [
-      el('h3', { html: `Query principali · ultimi ${d.days} giorni` }),
-      el('div', { style: 'overflow-x:auto;margin-top:12px' }, [el('table', {
-        style: 'width:100%;border-collapse:collapse;font-size:13.5px',
-        html: `<thead><tr style="text-align:left;color:var(--text-light);font-size:11px;
-                 letter-spacing:1px;text-transform:uppercase">
-               <th style="padding-bottom:8px">Query</th><th style="text-align:right">Click</th>
-               <th style="text-align:right">Impr.</th><th style="text-align:right">CTR</th>
-               <th style="text-align:right">Pos.</th></tr></thead><tbody>${rows}</tbody>`,
-      })]),
-    ]));
+    if (!connected) {
+      body.querySelectorAll('.stat').forEach((n) => n.append(demoBadge()));
+    }
+
+    body.append(el('div', { class: 'panel-row' }, [livePanel(), sourcesPanel()]));
+    body.append(mapPanel());
+
+    // what it takes to replace the placeholders
+    const note = el('div', { class: 'card' }, [
+      el('h3', { html: 'Come sostituire i dati dimostrativi' }),
+      el('ul', { class: 'setup-list', style: 'margin-top:10px',
+        html: DEMO_NEEDS.map(([what, how]) => `<li><strong>${esc(what)}</strong> — ${esc(how)}</li>`).join('') }),
+    ]);
+    if (!d.configured) {
+      note.append(el('p', { class: 'meta', style: 'margin-top:12px',
+        html: `Search Console: mancano ${d.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }));
+      note.append(el('ul', { class: 'setup-list', html: d.setup.map((x) => `<li>${esc(x)}</li>`).join('') }));
+    } else if (d.error) {
+      note.append(el('div', { class: 'msg err show', html: esc(d.error) }));
+    }
+    body.append(note);
+
+    if (connected && d.rows?.length) {
+      const rows = d.rows.map((r) => `<tr><td style="padding:7px 0">${esc(r.key)}</td>
+        <td style="text-align:right">${r.clicks}</td><td style="text-align:right">${r.impressions}</td>
+        <td style="text-align:right">${(r.ctr * 100).toFixed(1)}%</td>
+        <td style="text-align:right">${r.position.toFixed(1)}</td></tr>`).join('');
+      body.append(el('div', { class: 'card' }, [
+        el('h3', { html: `Query principali · ultimi ${d.days} giorni` }),
+        el('div', { style: 'overflow-x:auto;margin-top:12px' }, [el('table', {
+          style: 'width:100%;border-collapse:collapse;font-size:13.5px',
+          html: `<thead><tr style="text-align:left;color:var(--text-light);font-size:11px;
+                   letter-spacing:1px;text-transform:uppercase">
+                 <th style="padding-bottom:8px">Query</th><th style="text-align:right">Click</th>
+                 <th style="text-align:right">Impr.</th><th style="text-align:right">CTR</th>
+                 <th style="text-align:right">Pos.</th></tr></thead><tbody>${rows}</tbody>`,
+        })]),
+      ]));
+    }
   } catch (err) { failed(body, err); }
 };
 const stat = (k, v) => el('div', { class: 'stat' }, [el('div', { class: 'k', html: k }), el('div', { class: 'v', html: v })]);

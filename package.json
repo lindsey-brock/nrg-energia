@@ -1,7 +1,7 @@
 {
   "name": "nrg-energia-pagina-aziendale",
   "version": "1.0.0",
-  "description": "NRG Energia \u2014 company website, contact API and admin dashboard",
+  "description": "NRG Energia — company website, contact API and admin dashboard",
   "private": true,
   "dependencies": {
     "resend": "^3.2.0"
@@ -15,6 +15,7 @@
     "cloudinary:rewrite": "node scripts/migrate-cloudinary.mjs --rewrite",
     "seo:meta": "node scripts/add-seo-meta.mjs",
     "seo:check": "node scripts/add-seo-meta.mjs --check",
-    "og:cards": "node scripts/make-og-cards.mjs"
+    "og:cards": "node scripts/make-og-cards.mjs",
+    "map:italy": "node scripts/make-italy-map.mjs"
   }
 }
