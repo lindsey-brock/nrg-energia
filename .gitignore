@@ -5,3 +5,7 @@
 ~$*.docx
 ~$*.xlsx
 ~$*.pptx
+
+# Local secrets for the admin (never commit)
+.env
+.env*.local
