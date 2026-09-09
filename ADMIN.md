@@ -85,8 +85,15 @@ The save button follows the publish toggle — **Salva e pubblica** when the pos
 is live, **Salva bozza** when it is not — so it never claims to publish
 something it is only filing away.
 
-Blocks available: paragraph, sub-heading (H3/H4), pull quote, callout box,
-rate cards, icon list, image. The article title is the page's only H1 — one per
+Elements are added from a single **+** that appears between blocks on hover.
+It opens a menu showing a miniature of each one — body text, sub-heading
+(H3/H4), pull quote, callout box, rate cards, icon list, image — so it is clear
+what you are inserting before you insert it. Choosing from a **+** between two
+blocks drops the new element at that point rather than at the end.
+
+Selecting text inside the canvas raises a formatting bar: bold, italic, link and
+clear. Chrome emits `<b>`/`<i>`, which the site does not style, so those are
+rewritten to `<strong>`/`<em>` and inline `style` attributes are stripped. The article title is the page's only H1 — one per
 page is what search engines expect — so body headings start at H2 (the section
 titles) with H3/H4 beneath.
 

@@ -47,6 +47,48 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   const root = h('div', { class: 'canvas' });
   const touch = () => onDirty && onDirty();
 
+  // ── inline formatting toolbar ─────────────────────────────────────────────
+  // Appears over a text selection inside the canvas. execCommand is deprecated
+  // but remains the only thing that reliably edits a contenteditable selection.
+  let bar = null;
+  function hideBar() { bar?.remove(); bar = null; }
+
+  function normalise(node) {
+    // Chrome emits <b>/<i>; the site styles <strong>/<em>
+    node.querySelectorAll('b').forEach((el) => el.replaceWith(h('strong', { html: el.innerHTML })));
+    node.querySelectorAll('i').forEach((el) => el.replaceWith(h('em', { html: el.innerHTML })));
+    node.querySelectorAll('[style]').forEach((el) => el.removeAttribute('style'));
+  }
+
+  function showBar(host) {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !host.contains(sel.anchorNode)) { hideBar(); return; }
+    hideBar();
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const cmd = (name, arg) => (e) => {
+      e.preventDefault();
+      document.execCommand(name, false, arg);
+      normalise(host);
+      host.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    bar = h('div', { class: 'fmt-bar' }, [
+      h('button', { title: 'Grassetto', onmousedown: cmd('bold') }, ['B']),
+      h('button', { class: 'ital', title: 'Corsivo', onmousedown: cmd('italic') }, ['I']),
+      h('button', {
+        title: 'Link',
+        onmousedown: (e) => {
+          e.preventDefault();
+          const url = prompt(lang === 'it' ? 'Indirizzo del link' : 'Link address', 'https://');
+          if (url) cmd('createLink', url)(e);
+        },
+      }, ['🔗']),
+      h('button', { title: lang === 'it' ? 'Togli formattazione' : 'Clear', onmousedown: cmd('removeFormat') }, ['⌫']),
+    ]);
+    document.body.append(bar);
+    bar.style.top = `${window.scrollY + rect.top - bar.offsetHeight - 8}px`;
+    bar.style.left = `${window.scrollX + rect.left + rect.width / 2 - bar.offsetWidth / 2}px`;
+  }
+
   // ── inline editable ───────────────────────────────────────────────────────
   function editable(tag, html, onChange, cls = '') {
     const n = h(tag, { class: cls, contenteditable: 'true', spellcheck: 'false', html: html || '' });
@@ -57,6 +99,9 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       const text = (e.clipboardData || window.clipboardData).getData('text/plain');
       document.execCommand('insertText', false, text);
     });
+    n.addEventListener('mouseup', () => setTimeout(() => showBar(n), 0));
+    n.addEventListener('keyup', (e) => { if (e.shiftKey || e.key === 'ArrowLeft' || e.key === 'ArrowRight') showBar(n); });
+    n.addEventListener('blur', () => setTimeout(hideBar, 150));
     return n;
   }
 
@@ -228,22 +273,76 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   }
 
   // ── add-block menu ────────────────────────────────────────────────────────
-  function adder(section) {
-    const menu = h('div', { class: 'add-row' });
-    const make = (type) => {
-      if (type === 'p' || type === 'quote' || type === 'callout') return { type, html: '' };
-      if (type === 'heading') return { type, level: 3, html: '' };
-      if (type === 'rates') return { type, items: [{ value: '50%', label: '' }, { value: '36%', label: '', variant: 'alt' }] };
-      if (type === 'icons') return { type, items: [{ icon: 'panel', label: '' }, { icon: 'shield', label: '' }] };
-      return { type: 'figure', position: 'inline' };
-    };
-    for (const type of ['p', 'heading', 'quote', 'callout', 'rates', 'icons', 'figure']) {
-      menu.append(h('button', {
-        class: 'add-btn',
-        onclick: () => { section.blocks.push(make(type)); touch(); paint(); },
-      }, [`+ ${L[type]}`]));
-    }
-    return menu;
+  // One "+" per section opens a menu that shows what each element looks like,
+  // rather than a row of seven buttons repeated down the page.
+  const BLOCK_ORDER = ['p', 'heading', 'quote', 'callout', 'rates', 'icons', 'figure'];
+
+  const PREVIEW = {
+    p:       '<span class="pv-line w90"></span><span class="pv-line w100"></span><span class="pv-line w70"></span>',
+    heading: '<span class="pv-line pv-head w60"></span><span class="pv-line w90"></span>',
+    quote:   '<span class="pv-quote"><span class="pv-line w80"></span><span class="pv-line w60"></span></span>',
+    callout: '<span class="pv-callout"><i></i><span class="pv-line w70"></span></span>',
+    rates:   '<span class="pv-rates"><b>50%</b><b class="alt">36%</b></span>',
+    icons:   '<span class="pv-icons"><i></i><i></i><i></i><i></i></span>',
+    figure:  '<span class="pv-img"></span>',
+  };
+
+  const HINT = {
+    it: { p: 'Testo normale', heading: 'Titolo di terzo livello', quote: 'Frase in evidenza',
+          callout: 'Riquadro verde', rates: 'Due percentuali affiancate',
+          icons: 'Quattro voci con icona', figure: 'Foto a tutta larghezza' },
+    en: { p: 'Body text', heading: 'Third-level heading', quote: 'Pulled-out sentence',
+          callout: 'Green highlight box', rates: 'Two figures side by side',
+          icons: 'Four items with icons', figure: 'Full-width photo' },
+  };
+
+  function makeBlock(type) {
+    if (type === 'p' || type === 'quote' || type === 'callout') return { type, html: '' };
+    if (type === 'heading') return { type, level: 3, html: '' };
+    if (type === 'rates') return { type, items: [{ value: '50%', label: '' }, { value: '36%', label: '', variant: 'alt' }] };
+    if (type === 'icons') return { type, items: [{ icon: 'panel', label: '' }, { icon: 'shield', label: '' }] };
+    return { type: 'figure', position: 'inline' };
+  }
+
+  let openMenu = null;
+  function closeMenu() { openMenu?.remove(); openMenu = null; }
+  document.addEventListener('click', (e) => {
+    if (openMenu && !openMenu.contains(e.target) && !e.target.closest('.add-trigger')) closeMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+
+  function adder(section, atIndex = null) {
+    const trigger = h('button', { class: 'add-trigger', title: lang === 'it' ? 'Aggiungi elemento' : 'Add element' }, ['+']);
+    const wrap = h('div', { class: 'add-wrap' }, [trigger]);
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (openMenu?.dataset.owner === String(atIndex) && openMenu.parentElement === wrap) { closeMenu(); return; }
+      closeMenu();
+      const menu = h('div', { class: 'add-menu' });
+      menu.dataset.owner = String(atIndex);
+      menu.append(h('div', { class: 'add-menu-title' }, [lang === 'it' ? 'Aggiungi elemento' : 'Add element']));
+      const grid = h('div', { class: 'add-grid' });
+      for (const type of BLOCK_ORDER) {
+        grid.append(h('button', {
+          class: 'add-card',
+          onclick: () => {
+            const block = makeBlock(type);
+            if (atIndex === null) section.blocks.push(block);
+            else section.blocks.splice(atIndex, 0, block);
+            closeMenu(); touch(); paint();
+          },
+        }, [
+          h('span', { class: 'pv', html: PREVIEW[type] }),
+          h('span', { class: 'add-card-name' }, [L[type]]),
+          h('span', { class: 'add-card-hint' }, [HINT[lang][type]]),
+        ]));
+      }
+      menu.append(grid);
+      wrap.append(menu);
+      openMenu = menu;
+    });
+    return wrap;
   }
 
   // ── full paint ────────────────────────────────────────────────────────────
@@ -277,7 +376,10 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         }, ['Elimina sezione']),
       ]));
       secEl.append(editable('h2', section.heading, (v) => { section.heading = v; }));
-      section.blocks.forEach((b, bi) => secEl.append(renderBlock(b, section, bi)));
+      section.blocks.forEach((b, bi) => {
+        secEl.append(adder(section, bi));
+        secEl.append(renderBlock(b, section, bi));
+      });
       secEl.append(adder(section));
       root.append(secEl);
     });
