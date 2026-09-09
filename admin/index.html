@@ -212,6 +212,8 @@
     .lib-item:hover { border-color:var(--green-mid); box-shadow:0 4px 14px rgba(0,0,0,.1); }
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
+    @keyframes fieldFlash { from { box-shadow:0 0 0 3px var(--green-mid); } to { box-shadow:0 0 0 3px transparent; } }
+    .f.flash { animation:fieldFlash 1.8s ease-out; border-color:var(--green-mid); }
 
     /* Portfolio image controls — the editor shows pictures, never Cloudinary ids. */
     .img-field { margin-top:18px; }
@@ -667,10 +669,10 @@ async function uploadImage(file) {
   return `v${body.version}/${body.public_id}.${body.format}`;
 }
 
-function openPostEditor(post, { isNew = false } = {}) {
+function openPostEditor(post, { isNew = false, startLang = 'it', focusField = null } = {}) {
   work.innerHTML = '';
   const draft = structuredClone(post);
-  let lang = 'it';
+  let lang = startLang;
   let dirty = isNew;
 
   const langSwitch = el('div', { class: 'lang-switch' });
@@ -794,17 +796,23 @@ function openPostEditor(post, { isNew = false } = {}) {
   const metaCols = el('div', { class: 'lang-cols', style: 'margin-top:14px' });
   for (const code of ['it', 'en']) {
     const col = el('div', { class: 'lang-col' }, [el('h4', { html: code === 'it' ? 'Italiano' : 'English' })]);
-    const titleField = field('Titolo', draft[code].title, (v) => {
+    // name each field so an SEO report can send the editor straight to it
+    const tag = (name, node) => {
+      node.dataset.field = name;
+      node.dataset.lang = code;
+      return node;
+    };
+    const titleField = tag('title', field('Titolo', draft[code].title, (v) => {
       draft[code].title = v;
       if (code === lang) titleEl.textContent = v;
       dirty = true; queueSeo();
-    });
+    }));
     titleInputs[code] = titleField.querySelector('input');
     col.append(titleField);
-    col.append(field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; queueSeo(); }));
-    col.append(field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; queueSeo(); }, 'textarea'));
-    col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; queueSeo(); }, 'textarea'));
-    col.append(field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; queueSeo(); }));
+    col.append(tag('slug', field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; queueSeo(); })));
+    col.append(tag('excerpt', field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; queueSeo(); }, 'textarea')));
+    col.append(tag('metaDescription', field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; queueSeo(); }, 'textarea')));
+    col.append(tag('imageAlt', field('Testo alternativo immagine', draft[code].imageAlt, (v) => { draft[code].imageAlt = v; dirty = true; queueSeo(); })));
     col.append(field('Data', draft[code].dateLabel, (v) => { draft[code].dateLabel = v; dirty = true; }));
     col.append(field('Riferimenti normativi (testo | link | coda)',
       draft.references?.[code] ?? '', (v) => {
@@ -884,6 +892,19 @@ function openPostEditor(post, { isNew = false } = {}) {
   }
   work.append(pubCard, metaCard, sidebarCard, foot);
   mountCanvas();
+
+  // arrived from an SEO report: put the cursor on the field it flagged
+  if (focusField) {
+    // the label carries class "f" too, so name the control explicitly
+    const target = metaCard.querySelector(
+      `[data-field="${focusField}"][data-lang="${startLang}"] :is(input, textarea, select)`);
+    if (target) {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      target.focus({ preventScroll: true });
+      target.classList.add('flash');
+      setTimeout(() => target.classList.remove('flash'), 1800);
+    }
+  }
 
   // ── translation ─────────────────────────────────────────────────────────
   translateBtn.addEventListener('click', async () => {
@@ -1258,6 +1279,29 @@ async function savePortfolio(msg, btn) {
 
 // ── seo ────────────────────────────────────────────────────────────────────
 
+/**
+ * Open the article a report belongs to, in the report's language, on the
+ * field it flagged. The Blog tab may never have been opened, so the posts
+ * are fetched if they aren't loaded yet.
+ */
+async function openReport(report, btn) {
+  const label = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; }
+  try {
+    if (!postsDoc) postsDoc = (await api('content?type=posts')).data;
+    const post = postsDoc.posts.find((p) => p.id === report.postId);
+    if (!post) throw new Error('Articolo non trovato');
+    // leave the sidebar on Blog, so Annulla returns to the article list
+    view = 'blog';
+    [...$('#nav').querySelectorAll('button[data-view]')]
+      .forEach((b) => b.classList.toggle('active', b.dataset.view === 'blog'));
+    openPostEditor(post, { startLang: report.lang, focusField: report.issues[0]?.field });
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+    alert(err.message);
+  }
+}
+
 VIEWS.seo = async (root) => {
   header(root, 'SEO', 'Controlli sulla pagina calcolati dai tuoi contenuti — nessun servizio esterno.');
   const body = el('div'); root.append(body); loading(body);
@@ -1287,6 +1331,10 @@ VIEWS.seo = async (root) => {
             el('div', { html: `<strong>${esc(r.title)}</strong> <span class="pill grey">${r.lang.toUpperCase()}</span>` }),
             el('div', { class: 'meta', html: esc(r.issues[0]?.message || '') }),
           ]),
+          el('button', {
+            class: 'btn btn-ghost btn-sm',
+            onclick: (e) => openReport(r, e.currentTarget),
+          }, ['Sistema →']),
         ]));
       }
       body.append(card);
