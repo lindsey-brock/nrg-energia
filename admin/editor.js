@@ -448,7 +448,9 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   let openMenu = null;
   function closeMenu() { openMenu?.remove(); openMenu = null; }
   document.addEventListener('click', (e) => {
-    if (openMenu && !openMenu.contains(e.target) && !e.target.closest('.add-trigger')) closeMenu();
+    // both openers must be excluded, or the click that follows their own
+    // mousedown closes the menu again before anything can be picked
+    if (openMenu && !openMenu.contains(e.target) && !e.target.closest('.add-trigger, .fmt-insert')) closeMenu();
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 
