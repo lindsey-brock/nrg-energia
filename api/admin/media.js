@@ -129,8 +129,11 @@ export default requireSession(async function handler(req, res) {
       configured: true,          // the library itself works
       canUpload: false,
       missing: [!key && 'CLOUDINARY_API_KEY', !secret && 'CLOUDINARY_API_SECRET'].filter(Boolean),
+      // deliberately no mention of Cloudinary: whoever edits the site adds
+      // images through this panel and never sees the service behind it.
+      // The missing variables are named in Connessioni, which is the technical view.
       note: 'Sono mostrati i file già presenti sul sito. '
-        + 'Per caricarne di nuovi servono le chiavi Cloudinary.',
+        + 'Il caricamento di nuovi file non è ancora attivo.',
       cursor: null,
       images: site.slice(0, limit),
     });

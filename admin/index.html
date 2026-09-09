@@ -778,12 +778,12 @@ async function uploadMedia(file) {
   const kind = isVideoFile(file) ? 'video' : 'image';
   const sig = await api(`upload?kind=${kind}`);
   if (!sig.configured) {
-    throw new Error(`Caricamento non configurato: mancano ${sig.missing.join(', ')}`);
+    throw new Error('Il caricamento di nuovi file non è ancora attivo su questo sito.');
   }
   const capMB = kind === 'video' ? sig.limits.videoMB : sig.limits.imageMB;
   if (file.size > capMB * 1048576) {
     throw new Error(`${kind === 'video' ? 'Il video' : 'L’immagine'} pesa ${mb(file.size)}: `
-      + `il limite Cloudinary è ${capMB} MB.`);
+      + `il limite è ${capMB} MB.`);
   }
 
   const fd = new FormData();
@@ -1274,6 +1274,7 @@ function pickFromLibrary(onPick, { accept = 'image' } = {}) {
     foot.innerHTML = '';
     // browsing works without credentials; only uploading needs them
     addBtn.disabled = !r.canUpload;
+    if (!r.canUpload) addBtn.title = 'Caricamento non ancora attivo su questo sito';
     foot.append(addBtn, status, input);
     if (r.note) foot.append(el('p', { class: 'lib-note', html: esc(r.note) }));
     else if (r.canUpload) {

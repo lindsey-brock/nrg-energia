@@ -35,6 +35,24 @@ const PLATFORMS = [
     effort: 'circa 15 minuti, nessuna approvazione necessaria',
   },
   {
+    id: 'media', group: 'direct',
+    docs: 'https://console.cloudinary.com/settings/api-keys',
+    name: 'Libreria immagini',
+    metrics: 'Caricamento di foto e video dal pannello, senza passare da un servizio esterno',
+    fields: [
+      { key: 'CLOUDINARY_CLOUD_NAME', label: 'Nome del cloud', prefill: 'dmegrbq5k',
+        hint: 'Si trova in alto nella dashboard del servizio di archiviazione.' },
+      { key: 'CLOUDINARY_API_KEY', label: 'Chiave API', secret: true, placeholder: '123456789012345' },
+      { key: 'CLOUDINARY_API_SECRET', label: 'Segreto API', secret: true, placeholder: 'abc…' },
+    ],
+    steps: [
+      'Apri le impostazioni dell’account di archiviazione immagini → API Keys.',
+      'Copia il nome del cloud, la chiave API e il segreto.',
+      'Impostali nell’ambiente del sito: senza di essi la libreria mostra le immagini esistenti ma non permette di caricarne di nuove.',
+    ],
+    effort: 'circa 5 minuti, nessuna approvazione necessaria',
+  },
+  {
     id: 'pagespeed', group: 'direct',
     docs: 'https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com',
     name: 'PageSpeed Insights',
