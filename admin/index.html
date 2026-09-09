@@ -214,6 +214,19 @@
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
 
+    /* article preview */
+    .preview-overlay { position:fixed; inset:0; z-index:120; background:rgba(10,25,18,.72);
+                       display:flex; flex-direction:column; padding:18px; gap:12px; }
+    .preview-bar { display:flex; align-items:center; gap:10px; background:var(--white);
+                   border-radius:50px; padding:8px 10px 8px 18px; flex:none; }
+    .pv-widths { display:inline-flex; background:var(--off-white); border-radius:50px; padding:3px; gap:2px; }
+    .pv-widths button { font-family:'DM Sans',sans-serif; font-size:12.5px; border:none; background:none;
+                        color:var(--text-mid); padding:5px 13px; border-radius:50px; cursor:pointer; }
+    .pv-widths button.active { background:var(--green-dark); color:#fff; }
+    .preview-stage { flex:1; min-height:0; width:100%; margin:0 auto; background:var(--white);
+                     border-radius:var(--radius); overflow:hidden; transition:max-width .18s; }
+    .preview-frame { width:100%; height:100%; border:0; display:block; background:#fff; }
+
     /* Connessioni — a form per platform */
     .conn-card { display:flex; flex-direction:column; }
     .conn-form { margin-top:16px; border-top:1px solid var(--warm-gray); padding-top:6px; }
@@ -749,6 +762,44 @@ async function uploadImage(file) {
   return `v${body.version}/${body.public_id}.${body.format}`;
 }
 
+/**
+ * Shows rendered article HTML in a sandboxed frame. Scripts are off: nothing
+ * in the article needs them to lay out, and it keeps the cookie banner and
+ * the site's own navigation out of a preview.
+ */
+function openPreview(html, lang) {
+  const frame = el('iframe', { class: 'preview-frame', sandbox: '', title: 'Anteprima' });
+  frame.srcdoc = html;
+  const stage = el('div', { class: 'preview-stage' }, [frame]);
+
+  const close = () => { overlay.remove(); document.removeEventListener('keydown', onKey); };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+  const widths = [['Desktop', ''], ['Mobile', '390px']];
+  const widthBtns = widths.map(([label, w]) => {
+    const b = el('button', { class: `pv-w${w === '' ? ' active' : ''}` }, [label]);
+    b.addEventListener('click', () => {
+      stage.style.maxWidth = w || '';
+      [...b.parentElement.children].forEach((x) => x.classList.toggle('active', x === b));
+    });
+    return b;
+  });
+
+  const overlay = el('div', { class: 'preview-overlay' }, [
+    el('div', { class: 'preview-bar' }, [
+      el('strong', { html: 'Anteprima' }),
+      el('span', { class: 'pill grey', html: lang.toUpperCase() }),
+      el('span', { class: 'grow' }),
+      el('div', { class: 'pv-widths' }, widthBtns),
+      el('button', { class: 'btn btn-ghost btn-sm', onclick: close }, ['Chiudi']),
+    ]),
+    stage,
+  ]);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKey);
+  document.body.append(overlay);
+}
+
 function openPostEditor(post, { isNew = false, startLang = 'it', focusField = null } = {}) {
   work.innerHTML = '';
   const draft = structuredClone(post);
@@ -943,8 +994,22 @@ function openPostEditor(post, { isNew = false, startLang = 'it', focusField = nu
   saveBtn.disabled = !isNew;   // a new post is savable straight away
   const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
 
+  // renders the draft as it stands, saved or not
+  const previewBtn = el('button', { class: 'btn btn-ghost' }, ['Anteprima']);
+  previewBtn.addEventListener('click', async () => {
+    previewBtn.disabled = true;
+    previewBtn.innerHTML = '<span class="spinner"></span> Anteprima…';
+    msg.className = 'msg';
+    try {
+      const r = await api('preview', { method: 'POST', body: { post: draft, lang } });
+      openPreview(r.html, lang);
+    } catch (err) {
+      msg.className = 'msg err show'; msg.textContent = err.message;
+    } finally { previewBtn.disabled = false; previewBtn.textContent = 'Anteprima'; }
+  });
+
   const foot = el('div', { class: 'editor-foot' }, [
-    saveBtn, translateBtn,
+    saveBtn, previewBtn, translateBtn,
     el('button', {
       class: 'btn btn-ghost',
       onclick: () => {
