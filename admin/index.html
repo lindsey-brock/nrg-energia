@@ -198,6 +198,7 @@
                 border:1px solid var(--warm-gray); color:var(--text-mid); border-radius:50px;
                 padding:5px 12px; cursor:pointer; margin-top:8px; }
     .pick-btn:hover { border-color:var(--green-mid); color:var(--green-dark); background:var(--green-pale); }
+    a.pick-btn { text-decoration:none; }
     .lib-overlay { position:fixed; inset:0; background:rgba(10,25,18,.6); z-index:100;
                    display:flex; align-items:center; justify-content:center; padding:24px; }
     .lib { background:var(--white); border-radius:var(--radius); width:100%; max-width:760px;
@@ -225,6 +226,28 @@
     .conn-pre { background:var(--green-dark); color:#dff0e5; border-radius:var(--radius-sm);
                 padding:12px 14px; font-family:ui-monospace,Menlo,monospace; font-size:12px;
                 overflow-x:auto; margin-top:8px; white-space:pre; }
+    .conn-form textarea.f, .conn-card textarea.f { min-height:88px;
+                font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+    /* social picker + walkthrough */
+    .brand-mark { display:inline-flex; align-items:center; }
+    .brand-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+                  gap:12px; margin-top:16px; }
+    .brand-tile { display:flex; flex-direction:column; align-items:center; gap:7px;
+                  padding:18px 12px; background:var(--white); cursor:pointer;
+                  border:1px solid var(--warm-gray); border-radius:var(--radius-sm);
+                  font-family:'DM Sans',sans-serif; transition:.15s; }
+    .brand-tile:hover { border-color:var(--green-mid); box-shadow:0 4px 14px rgba(0,0,0,.07);
+                        transform:translateY(-1px); }
+    .brand-tile.done { border-color:var(--green-light); background:var(--green-pale); }
+    .brand-name { font-size:13.5px; font-weight:600; color:var(--text-dark); }
+    .wiz-title { display:flex; align-items:center; gap:9px; }
+    .wiz-title h3 { margin:0; }
+    .wiz-bar { display:flex; gap:5px; margin-top:14px; }
+    .wiz-pip { flex:1; height:4px; border-radius:50px; background:var(--warm-gray); }
+    .wiz-pip.on { background:var(--green-mid); }
+    .wiz-step { margin-top:12px; font-size:15px; line-height:1.55; color:var(--text-dark); }
+    .wiz-nav { display:flex; gap:8px; margin-top:20px; padding-top:16px;
+               border-top:1px solid var(--warm-gray); }
 
     /* Andamento — map, live sessions, traffic sources */
     .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -1683,10 +1706,31 @@ VIEWS.marketing = async (root) => {
 const stat = (k, v) => el('div', { class: 'stat' }, [el('div', { class: 'k', html: k }), el('div', { class: 'v', html: v })]);
 
 // ── connections ────────────────────────────────────────────────────────────
-// A real form per platform. The values are never sent to the server: these
-// functions read process.env, which is fixed at deploy time, so the panel
-// collects the credentials and produces the exact variables to set on the
-// host. Nothing is stored by the admin, and no secret is written to the repo.
+// Two groups. Search Console and PageSpeed need no approval and are shown
+// open, ready to fill. The social platforms sit behind a picker and a guided
+// walkthrough, because each one is a multi-day approval process and six open
+// forms said nothing about which to start with.
+//
+// Values are never sent to the server: these functions read process.env, fixed
+// at deploy time, so the panel collects credentials and prints the variables
+// to set on the host. Nothing is stored, and no secret reaches the repo.
+
+const BRAND = {
+  instagram: { label: 'Instagram', color: '#E1306C', icon:
+    '<path fill-rule="evenodd" d="M8 2h8a6 6 0 0 1 6 6v8a6 6 0 0 1-6 6H8a6 6 0 0 1-6-6V8a6 6 0 0 1 6-6zm0 2a4 4 0 0 0-4 4v8a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4V8a4 4 0 0 0-4-4H8zm4 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm5.5-3a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5z"/>' },
+  facebook: { label: 'Facebook', color: '#1877F2', icon:
+    '<path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>' },
+  linkedin: { label: 'LinkedIn', color: '#0A66C2', icon:
+    '<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2zM4 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"/>' },
+  youtube: { label: 'YouTube', color: '#FF0000', icon:
+    '<path fill-rule="evenodd" d="M12 3c4.6 0 7.5.1 9.3.4A3 3 0 0 1 23.5 5.5c.5 2 .5 6 .5 6s0 4-.5 6a3 3 0 0 1-2.2 2.1c-1.8.3-4.7.4-9.3.4-4.6 0-7.5-.1-9.3-.4A3 3 0 0 1 .5 17.5c-.5-2-.5-6-.5-6s0-4 .5-6a3 3 0 0 1 2.2-2.1C4.5 3.1 7.4 3 12 3zM9.5 7.9v7.2l7-3.6-7-3.6z"/>' },
+};
+
+const brandMark = (id, size = 22) => {
+  const b = BRAND[id];
+  return el('span', { class: 'brand-mark', style: `color:${b.color}`, html:
+    `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor">${b.icon}</svg>` });
+};
 
 function copyButton(getText, label = 'Copia') {
   const btn = el('button', { class: 'btn btn-ghost btn-sm' }, [label]);
@@ -1707,24 +1751,13 @@ function copyButton(getText, label = 'Copia') {
   return btn;
 }
 
-/** One platform card: status, what it measures, and the form to connect it. */
-function connectionCard(p, shared) {
-  const card = el('div', { class: 'card conn-card' });
+/**
+ * The credential fields for one platform, plus the block of variables they
+ * produce. Shared by the open cards and the last step of the social wizard.
+ */
+function credentialForm(p, shared) {
+  const wrap = el('div');
   const values = Object.create(null);
-
-  const status = el('span', { class: `status ${p.connected ? 'on' : 'off'}`,
-    html: p.connected ? 'Collegato' : 'Non collegato' });
-  const toggle = el('button', { class: 'btn btn-ghost btn-sm' },
-    [p.connected ? 'Aggiorna' : 'Collega']);
-  const form = el('div', { class: 'conn-form', hidden: '' });
-
-  card.append(
-    el('div', { class: 'card-head' }, [el('h3', { html: esc(p.name) }), status]),
-    el('p', { class: 'meta', style: 'margin-top:6px', html: esc(p.metrics) }),
-    el('p', { class: 'meta', style: 'margin-top:8px;font-style:italic', html: esc(p.effort) }),
-    el('div', { style: 'margin-top:12px' }, [toggle]),
-    form,
-  );
 
   for (const f of p.fields) {
     const initial = shared.values[f.key] ?? f.prefill ?? '';
@@ -1732,17 +1765,15 @@ function connectionCard(p, shared) {
 
     const input = el(f.multiline ? 'textarea' : 'input', {
       class: 'f', type: f.secret && !f.multiline ? 'password' : 'text',
-      placeholder: f.placeholder || (f.set ? '•••••• (già impostata)' : ''),
+      // an example, never a value: nothing fake can be copied into production
+      placeholder: f.set ? '•••••• (già impostata)' : (f.placeholder || ''),
       spellcheck: 'false',
     });
     input.value = initial;
     input.addEventListener('input', () => {
       values[f.key] = input.value;
-      // Facebook and Instagram authenticate with the same Meta token
-      if (f.shared) shared.set(f.key, input.value, input);
+      if (f.shared) shared.set(f.key, input.value, input);   // Meta token spans two platforms
     });
-    // subscribers live on the per-render `shared` object, not on document, so
-    // they are dropped with the view instead of piling up on every navigation
     if (f.shared) {
       shared.subs.push((key, value, from) => {
         if (key !== f.key || from === input) return;
@@ -1750,12 +1781,14 @@ function connectionCard(p, shared) {
       });
     }
 
-    const head = el('div', { class: 'field-head' }, [
-      el('label', { class: 'f', style: 'margin:0' }, [f.label]),
-      el('code', { class: 'env', html: f.key }),
-      f.set ? el('span', { class: 'status on', html: 'impostata' }) : null,
+    const field = el('div', { class: 'field', style: 'margin-top:14px' }, [
+      el('div', { class: 'field-head' }, [
+        el('label', { class: 'f', style: 'margin:0' }, [f.label]),
+        el('code', { class: 'env', html: f.key }),
+        f.set ? el('span', { class: 'status on', html: 'impostata' }) : null,
+      ]),
+      input,
     ]);
-    const wrap = el('div', { class: 'field', style: 'margin-top:12px' }, [head, input]);
     if (f.secret && !f.multiline) {
       const eye = el('button', { class: 'pick-btn', style: 'margin-top:6px' }, ['Mostra']);
       eye.addEventListener('click', () => {
@@ -1763,39 +1796,30 @@ function connectionCard(p, shared) {
         input.type = shown ? 'password' : 'text';
         eye.textContent = shown ? 'Mostra' : 'Nascondi';
       });
-      wrap.append(eye);
+      field.append(eye);
     }
-    if (f.hint) wrap.append(el('p', { class: 'meta', style: 'margin-top:6px', html: esc(f.hint) }));
-    form.append(wrap);
+    if (f.hint) field.append(el('p', { class: 'meta', style: 'margin-top:6px', html: esc(f.hint) }));
+    wrap.append(field);
   }
 
-  form.append(el('details', { class: 'conn-steps' }, [
-    el('summary', { html: 'Come ottenere questi valori' }),
-    el('ul', { class: 'setup-list', html: p.steps.map((x) => `<li>${esc(x)}</li>`).join('') }),
-  ]));
-
-  // the output: the exact variables to set on the host
   const out = el('div', { class: 'conn-out', hidden: '' });
-  const envText = () => p.fields
-    .filter((f) => values[f.key])
-    .map((f) => `${f.key}=${values[f.key]}`).join('\n');
-
   const gen = el('button', { class: 'btn btn-primary btn-sm' }, ['Genera variabili']);
   gen.addEventListener('click', () => {
-    const text = envText();
+    const filled = p.fields.filter((f) => values[f.key]);
     out.innerHTML = '';
-    if (!text) {
+    if (!filled.length) {
       out.append(el('div', { class: 'msg err show', html: 'Compila almeno un campo.' }));
       out.hidden = false; return;
     }
+    const text = filled.map((f) => `${f.key}=${values[f.key]}`).join('\n');
     out.append(
       el('p', { class: 'meta', html: 'Da impostare nell’ambiente del sito (Vercel → Settings → '
         + 'Environment Variables). Diventano attive al deploy successivo.' }),
       el('pre', { class: 'conn-pre', html: esc(text) }),
       el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px' }, [
         copyButton(() => text, 'Copia le variabili'),
-        copyButton(() => p.fields.filter((f) => values[f.key])
-          .map((f) => `vercel env add ${f.key} production`).join('\n'), 'Copia i comandi vercel'),
+        copyButton(() => filled.map((f) => `vercel env add ${f.key} production`).join('\n'),
+          'Copia i comandi vercel'),
       ]),
       el('p', { class: 'meta', style: 'margin-top:10px',
         html: 'Questi valori non vengono salvati dal pannello né scritti nel repository.' }),
@@ -1803,12 +1827,111 @@ function connectionCard(p, shared) {
     out.hidden = false;
   });
 
-  form.append(el('div', { style: 'margin-top:16px' }, [gen]), out);
+  wrap.append(el('div', { style: 'margin-top:18px' }, [gen]), out);
+  return wrap;
+}
 
-  toggle.addEventListener('click', () => {
-    form.hidden = !form.hidden;
-    toggle.textContent = form.hidden ? (p.connected ? 'Aggiorna' : 'Collega') : 'Chiudi';
-  });
+/** Search Console and PageSpeed: open, no walkthrough, nothing to approve. */
+function directCard(p, shared) {
+  return el('div', { class: 'card conn-card' }, [
+    el('div', { class: 'card-head' }, [
+      el('h3', { html: esc(p.name) }),
+      el('span', { class: `status ${p.connected ? 'on' : 'off'}`,
+        html: p.connected ? 'Collegato' : 'Non collegato' }),
+    ]),
+    el('p', { class: 'meta', style: 'margin-top:6px', html: esc(p.metrics) }),
+    el('p', { class: 'meta', style: 'margin-top:6px;font-style:italic', html: esc(p.effort) }),
+    p.docs ? el('a', { class: 'pick-btn', style: 'align-self:flex-start;margin-top:10px',
+      href: p.docs, target: '_blank', rel: 'noopener' }, ['Apri la console ↗']) : null,
+    credentialForm(p, shared),
+  ]);
+}
+
+/**
+ * The social platforms: pick one, then walk its setup a step at a time and
+ * finish on the credential fields.
+ */
+function socialPanel(platforms, shared) {
+  const card = el('div', { class: 'card' });
+
+  const showPicker = () => {
+    card.innerHTML = '';
+    card.append(
+      el('div', { class: 'card-head' }, [
+        el('h3', { html: 'Collega un social' }),
+        el('span', { class: 'meta',
+          html: `${platforms.filter((p) => p.connected).length} di ${platforms.length} collegati` }),
+      ]),
+      el('p', { class: 'meta', style: 'margin-top:6px',
+        html: 'Scegli una piattaforma: la procedura viene spiegata passo per passo. '
+          + 'Ognuna richiede un’approvazione da parte della piattaforma.' }),
+    );
+    const grid = el('div', { class: 'brand-grid' });
+    for (const p of platforms) {
+      const tile = el('button', { class: `brand-tile${p.connected ? ' done' : ''}` }, [
+        brandMark(p.id, 26),
+        el('span', { class: 'brand-name', html: esc(BRAND[p.id].label) }),
+        el('span', { class: 'meta', html: p.connected ? 'Collegato' : 'Non collegato' }),
+      ]);
+      tile.addEventListener('click', () => showWizard(p));
+      grid.append(tile);
+    }
+    card.append(grid);
+  };
+
+  const showWizard = (p) => {
+    const total = p.steps.length + 1;      // the setup steps, then the fields
+    let step = 0;
+
+    const paint = () => {
+      card.innerHTML = '';
+      const back = el('button', { class: 'btn btn-ghost btn-sm' }, ['← Tutti i social']);
+      back.addEventListener('click', showPicker);
+
+      card.append(el('div', { class: 'card-head' }, [
+        el('div', { class: 'wiz-title' }, [brandMark(p.id, 22), el('h3', { html: esc(p.name) })]),
+        back,
+      ]));
+
+      const bar = el('div', { class: 'wiz-bar' });
+      for (let i = 0; i < total; i++) {
+        bar.append(el('span', { class: `wiz-pip${i <= step ? ' on' : ''}` }));
+      }
+      card.append(bar, el('p', { class: 'meta', style: 'margin-top:8px',
+        html: `Passo ${step + 1} di ${total}` }));
+
+      if (step < p.steps.length) {
+        card.append(el('p', { class: 'wiz-step', html: esc(p.steps[step]) }));
+        if (step === 0 && p.docs) {
+          card.append(el('a', { class: 'pick-btn', style: 'display:inline-block;text-decoration:none',
+            href: p.docs, target: '_blank', rel: 'noopener' }, ['Apri la console ↗']));
+        }
+        if (step === 0) {
+          card.append(el('p', { class: 'meta', style: 'margin-top:12px;font-style:italic',
+            html: esc(p.effort) }));
+        }
+      } else {
+        card.append(el('p', { class: 'wiz-step', html: 'Incolla qui i valori ottenuti.' }));
+        card.append(credentialForm(p, shared));
+      }
+
+      const nav = el('div', { class: 'wiz-nav' });
+      if (step > 0) {
+        const prev = el('button', { class: 'btn btn-ghost btn-sm' }, ['Indietro']);
+        prev.addEventListener('click', () => { step -= 1; paint(); });
+        nav.append(prev);
+      }
+      if (step < total - 1) {
+        const next = el('button', { class: 'btn btn-primary btn-sm' }, ['Avanti']);
+        next.addEventListener('click', () => { step += 1; paint(); });
+        nav.append(next);
+      }
+      card.append(nav);
+    };
+    paint();
+  };
+
+  showPicker();
   return card;
 }
 
@@ -1822,7 +1945,7 @@ VIEWS.connections = async (root) => {
     body.append(el('p', { class: 'meta', style: 'margin-bottom:16px',
       html: `${connectedCount} di ${platforms.length} collegate` }));
 
-    // META_ACCESS_TOKEN spans two cards: typing it once fills both
+    // META_ACCESS_TOKEN spans two platforms: typing it once fills both
     const shared = {
       values: Object.create(null),
       subs: [],
@@ -1831,9 +1954,14 @@ VIEWS.connections = async (root) => {
         for (const fn of this.subs) fn(key, value, from);
       },
     };
+
+    const direct = platforms.filter((p) => p.group === 'direct');
+    const social = platforms.filter((p) => p.group === 'social');
+
     const grid = el('div', { class: 'conn-grid' });
-    for (const p of platforms) grid.append(connectionCard(p, shared));
+    for (const p of direct) grid.append(directCard(p, shared));
     body.append(grid);
+    if (social.length) body.append(socialPanel(social, shared));
   } catch (err) { failed(body, err); }
 };
 
