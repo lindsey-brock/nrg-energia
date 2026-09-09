@@ -654,7 +654,7 @@ function openPostEditor(post, { isNew = false } = {}) {
     }),
   ]));
 
-  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e rigenera']);
+  const saveBtn = el('button', { class: 'btn btn-primary' }, ['Salva e pubblica']);
   saveBtn.disabled = !isNew;   // a new post is savable straight away
   const translateBtn = el('button', { class: 'btn btn-ghost' }, ['Genera versione inglese']);
 
@@ -753,7 +753,7 @@ function openPostEditor(post, { isNew = false } = {}) {
         + (r.note ? ` · ${esc(r.note)}` : '');
     } catch (err) {
       msg.className = 'msg err show'; msg.textContent = err.message;
-    } finally { saveBtn.textContent = 'Salva e rigenera'; saveBtn.disabled = false; }
+    } finally { saveBtn.textContent = 'Salva e pubblica'; saveBtn.disabled = false; }
   });
 }
 
