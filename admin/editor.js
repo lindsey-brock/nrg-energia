@@ -1,4 +1,4 @@
-import { ICONS, ICON_ORDER, ICON_LABELS } from '../scripts/icons.mjs';
+import { ICONS, ICON_ORDER, ICON_LABELS } from '/scripts/icons.mjs';
 
 // Canvas editor for blog posts.
 //

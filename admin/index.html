@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="robots" content="noindex, nofollow"/>
   <title>Admin — NRG Energia</title>
-  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="canvas.css">
+  <!-- Absolute paths: this page is served at /admin with no trailing slash,
+       so relative URLs would resolve against / and 404. -->
+  <link rel="stylesheet" href="/admin/canvas.css">
   <style>
     /* ── canvas editor chrome ─────────────────────────────────────────────── */
     .canvas { background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius);
@@ -563,7 +565,7 @@
       <button data-view="connections">Connessioni</button>
     </nav>
     <div class="side-foot">
-      <a href="../index" target="_blank" rel="noopener">Apri il sito ↗</a>
+      <a href="/index" target="_blank" rel="noopener">Apri il sito ↗</a>
       <button id="logoutBtn">Esci</button>
     </div>
   </aside>
@@ -571,8 +573,8 @@
 </div>
 
 <script type="module">
-import { ITALY_VIEWBOX, ITALY_PATH, project } from './italy-map.js';
-import { createCanvas } from './editor.js';
+import { ITALY_VIEWBOX, ITALY_PATH, project } from '/admin/italy-map.js';
+import { createCanvas } from '/admin/editor.js';
 
 const $  = (s, r = document) => r.querySelector(s);
 const el = (t, a = {}, kids = []) => {
