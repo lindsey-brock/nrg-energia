@@ -395,7 +395,13 @@
     /* ── shell ───────────────────────────────────────────────────────────── */
     .app { display:none; min-height:100vh; grid-template-columns:236px 1fr; }
     .app.show { display:grid; }
-    aside.side { background:#111a14; color:rgba(255,255,255,.62); padding:24px 0; display:flex; flex-direction:column; }
+    /* Pinned: align-self:start stops the grid stretching the column, which is
+       what lets sticky move it. The page keeps scrolling on the window, so the
+       editor toolbar's own position:sticky is unaffected. */
+    aside.side { background:#111a14; color:rgba(255,255,255,.62); padding:24px 0;
+                 display:flex; flex-direction:column;
+                 position:sticky; top:0; align-self:start; height:100vh;
+                 overflow-y:auto; overscroll-behavior:contain; z-index:10; }
     .side-logo { display:flex; align-items:center; gap:10px; padding:0 22px 24px; }
     .side-logo span { font-family:'Syne',sans-serif; font-weight:700; font-size:15px; color:#fff; letter-spacing:-.2px; }
     .side-tag { font-size:10px; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.35);
@@ -464,7 +470,9 @@
 
     @media (max-width:900px) {
       .app.show { grid-template-columns:1fr; }
-      aside.side { flex-direction:row; align-items:center; overflow-x:auto; padding:10px 0; }
+      /* a pinned top bar on narrow screens rather than a full-height column */
+      aside.side { flex-direction:row; align-items:center; overflow-x:auto; padding:10px 0;
+                   height:auto; align-self:auto; top:0; }
       .side-logo, .side-tag, .side-foot { display:none; }
       nav.side-nav { flex-direction:row; }
       main.work { padding:24px 20px 48px; }
