@@ -6,5 +6,10 @@
       "source": "/api/admin/:name",
       "destination": "/api/admin-router?route=:name"
     }
-  ]
+  ],
+  "functions": {
+    "api/admin-router.js": {
+      "includeFiles": "{content/**,scripts/templates/**,*.html,services/**/*.html}"
+    }
+  }
 }
