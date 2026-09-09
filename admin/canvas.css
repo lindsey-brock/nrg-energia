@@ -46,4 +46,8 @@
 
 /* an odd count leaves the last card alone; the "+ Voce" button is a <button>,
    so :last-of-type still resolves to the final .icon-card div */
-.canvas .icon-grid .icon-card:last-of-type:nth-of-type(odd) { grid-column: 1 / -1; }
+.canvas .icon-grid .icon-card:last-of-type:nth-of-type(odd) {
+  grid-column: 1 / -1; width: calc(50% - 6px); justify-self: center; }
+@media (max-width: 900px) {
+  .canvas .icon-grid .icon-card:last-of-type:nth-of-type(odd) { width: auto; justify-self: stretch; }
+}

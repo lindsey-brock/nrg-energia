@@ -205,8 +205,10 @@
     /* icon grid */
     .icon-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 24px 0 32px; }
     .icon-card { background: var(--off-white); border: 1px solid var(--warm-gray); border-radius: var(--radius-sm); padding: 18px 20px; display: flex; align-items: center; gap: 13px; }
-    /* an odd count leaves the last card alone in a two-column grid — let it span */
-    .icon-grid .icon-card:last-of-type:nth-of-type(odd) { grid-column: 1 / -1; }
+    /* an odd count leaves the last card alone in a two-column grid — centre it,
+       at the same width as the others (gap is 12px, so a column is 50% - 6px) */
+    .icon-grid .icon-card:last-of-type:nth-of-type(odd) {
+      grid-column: 1 / -1; width: calc(50% - 6px); justify-self: center; }
     .icon-card svg { flex-shrink: 0; color: var(--green-mid); }
     .icon-card span { font-size: 14.5px; font-weight: 500; color: var(--text-dark); line-height: 1.35; }
     .article-body .lead { font-size: 19px; line-height: 1.7; color: var(--text-dark); font-weight: 400; margin-bottom: 28px; }
@@ -280,6 +282,9 @@
       .article-figure { margin-top: -80px; }
       .article-figure img { aspect-ratio: 16/9; }
       .icon-grid { grid-template-columns: 1fr; }
+      /* justify-self:center makes a grid item shrink-to-fit, so it has to go
+         too — width:auto alone leaves the card at its content width */
+      .icon-grid .icon-card:last-of-type:nth-of-type(odd) { width: auto; justify-self: stretch; }
       .blog-cta-inner { flex-direction: column; align-items: flex-start; }
     }
     /* FOOTER */
