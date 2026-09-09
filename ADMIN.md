@@ -248,7 +248,13 @@ their web UI if that's wanted — not worth wiring into this dashboard.
 ## Marketing sources
 
 Each platform reports as connected only when its credentials are present. See
-`api/admin/integrations.js` for the per-platform setup steps.
+`api/admin/_integrations.js` for the per-platform setup steps.
+
+All admin routes are served by the single function `api/admin/[...path].js`,
+which dispatches to the `_`-prefixed modules beside it. Vercel makes a
+Serverless Function out of every non-underscore file under `api/`, and the
+Hobby plan allows twelve per deployment; one router keeps the whole admin
+inside one of them. The URLs are unchanged.
 
 | Source | Variables | Effort |
 |---|---|---|

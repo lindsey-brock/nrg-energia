@@ -53,11 +53,25 @@ createServer(async (req, res) => {
 
   // ── API ───────────────────────────────────────────────────────────────────
   if (path.startsWith('/api/')) {
-    const file = join(ROOT, `${path}.js`);
+    let file = join(ROOT, `${path}.js`);
+    let segments = null;
+
+    // Vercel-style catch-all: with no exact file, walk up looking for
+    // [...path].js and hand it the remaining segments, the way the platform
+    // routes /api/admin/media to api/admin/[...path].js.
+    if (!existsSync(file)) {
+      const parts = path.slice('/api/'.length).split('/').filter(Boolean);
+      for (let i = parts.length - 1; i >= 0; i--) {
+        const candidate = join(ROOT, 'api', ...parts.slice(0, i), '[...path].js');
+        if (existsSync(candidate)) { file = candidate; segments = parts.slice(i); break; }
+      }
+    }
+
     if (!existsSync(file)) { res.statusCode = 404; return res.end('No such function'); }
     try {
       const mod = await import(`${pathToFileURL(file).href}?t=${Date.now()}`); // fresh each request
       shim(req, res, url, await readBody(req));
+      if (segments) req.query.path = segments;
       await mod.default(req, res);
     } catch (err) {
       console.error(`[api] ${path}:`, err);
