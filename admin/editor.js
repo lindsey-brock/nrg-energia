@@ -163,6 +163,19 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     });
   }
 
+  // Toolbar glyphs as inline SVG. The text arrows (↶ ↷) and the 🔗 emoji render
+  // at different weights from platform to platform and sat badly beside B/I/U.
+  const T_ICON = (d, extra = '') =>
+    `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"${extra}>${d}</svg>`;
+
+  const BAR = {
+    undo: T_ICON('<path d="M4 8h11a5 5 0 0 1 0 10h-6"/><path d="M8 4L4 8l4 4"/>'),
+    redo: T_ICON('<path d="M20 8H9a5 5 0 0 0 0 10h6"/><path d="M16 4l4 4-4 4"/>'),
+    link: T_ICON('<path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/>'),
+    ul:   T_ICON('<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="4.5" cy="18" r="1.3" fill="currentColor" stroke="none"/>'),
+    ol:   T_ICON('<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5.2l1.2-.7V8"/><path d="M3.6 11.2a1.2 1.2 0 1 1 1.9 1.4L3.6 14.6h2.2"/><path d="M3.7 17h1.9l-1.3 1.4a1.1 1.1 0 1 1-.5 1.5"/>'),
+  };
+
   const TOOLS = {
     it: { style: 'Stile', para: 'Paragrafo', h3: 'Sottotitolo H3', h4: 'Sottotitolo H4', quote: 'Citazione',
           bold: 'Grassetto', italic: 'Corsivo', underline: 'Sottolineato',
@@ -234,13 +247,13 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     });
 
     const undoBtn = h('button', {
-      class: 'fmt-btn', title: t.undo,
+      class: 'fmt-btn icon', title: t.undo, html: BAR.undo,
       onmousedown: (e) => { e.preventDefault(); undo(); },
-    }, ['↶']);
+    });
     const redoBtn = h('button', {
-      class: 'fmt-btn', title: t.redo,
+      class: 'fmt-btn icon', title: t.redo, html: BAR.redo,
       onmousedown: (e) => { e.preventDefault(); redo(); },
-    }, ['↷']);
+    });
     syncHistoryButtons = () => {
       undoBtn.disabled = past.length === 0;
       redoBtn.disabled = future.length === 0;
@@ -256,15 +269,20 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       btn('I', t.italic, cmd('italic'), 'ital', 'italic'),
       btn('U', t.underline, cmd('underline'), 'under', 'underline'),
       h('span', { class: 'fmt-sep' }),
-      btn('🔗', t.link, apply(() => {
-        const url = prompt(t.link, 'https://');
-        if (!url) return;
-        snapshot();
-        document.execCommand('createLink', false, url);
-      })),
+      h('button', {
+        class: 'fmt-btn icon', title: t.link, html: BAR.link,
+        onmousedown: apply(() => {
+          const url = prompt(t.link, 'https://');
+          if (!url) return;
+          snapshot();
+          document.execCommand('createLink', false, url);
+        }),
+      }),
       h('span', { class: 'fmt-sep' }),
-      btn('• —', t.ul, cmd('insertUnorderedList'), '', 'insertUnorderedList'),
-      btn('1. —', t.ol, cmd('insertOrderedList'), '', 'insertOrderedList'),
+      h('button', { class: 'fmt-btn icon', title: t.ul, html: BAR.ul,
+        'data-cmd': 'insertUnorderedList', onmousedown: cmd('insertUnorderedList') }),
+      h('button', { class: 'fmt-btn icon', title: t.ol, html: BAR.ol,
+        'data-cmd': 'insertOrderedList', onmousedown: cmd('insertOrderedList') }),
       h('span', { class: 'fmt-sep' }),
       insertWrap,
       h('span', { class: 'fmt-hint' }, [t.hint]),
