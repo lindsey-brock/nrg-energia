@@ -30,6 +30,15 @@
     .blk.selected { background:var(--green-pale); box-shadow:0 0 0 2px var(--green-mid); }
     .blk.selected .blk-handle, .blk.selected .blk-kind, .blk.selected .blk-del { opacity:1; }
     .blk.selected .blk-kind::after { content:' · backspace per eliminare'; }
+    .link-bubble { position:absolute; z-index:45; display:flex; align-items:center; gap:8px;
+      padding:5px 6px 5px 11px; background:#1a1a18; border-radius:7px;
+      box-shadow:0 6px 20px rgba(0,0,0,.28); white-space:nowrap; }
+    .link-bubble a { color:#cfe6d7; font-size:12.5px; text-decoration:none; max-width:280px;
+      overflow:hidden; text-overflow:ellipsis; }
+    .link-bubble a:hover { color:#fff; text-decoration:underline; }
+    .link-remove { background:none; border:none; color:rgba(255,255,255,.55); cursor:pointer;
+      font-size:16px; line-height:1; padding:0 4px; border-radius:4px; }
+    .link-remove:hover { color:#fff; background:rgba(255,255,255,.16); }
     .blk-menu { position:absolute; z-index:50; min-width:170px; padding:4px;
       background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius-sm);
       box-shadow:0 12px 32px rgba(0,0,0,.18); }

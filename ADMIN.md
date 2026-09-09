@@ -116,6 +116,10 @@ underneath it:
 | Lists | bulleted, numbered |
 | **+ Inserisci** | the same element picker as the "+" between blocks, inserting after the current block |
 
+Clicking a link inside the canvas shows a small bubble with where it points and
+an × to remove it — the link is not followed while editing. Removing it unwraps
+the anchor and keeps the text, and the change is undoable like any other.
+
 Undo and redo work on the document, not the DOM: the canvas is rebuilt from the
 model on every change, so the browser's own undo stack is discarded constantly
 and cannot be used. Snapshots are taken before each structural edit and, while

@@ -95,6 +95,57 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     if (m && m.blocks[i]?.type === 'figure') m.blocks[i].image = publicId;
   }
 
+  // ── link bubble ───────────────────────────────────────────────────────────
+  // Clicking a link inside the canvas shows where it points, with an × to
+  // remove it — rather than a toolbar button that only works while the right
+  // text happens to be selected.
+  let linkBubble = null;
+  function closeLinkBubble() { linkBubble?.remove(); linkBubble = null; }
+
+  function unlink(a, host) {
+    const parent = a.parentNode;
+    while (a.firstChild) parent.insertBefore(a.firstChild, a);
+    parent.removeChild(a);
+    parent.normalize();                                    // rejoin split text nodes
+    host.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function showLinkBubble(a, host) {
+    closeLinkBubble();
+    const href = a.getAttribute('href') || '';
+    const shown = href.replace(/^https?:\/\//, '').slice(0, 44) + (href.length > 51 ? '…' : '');
+    const bubble = h('div', { class: 'link-bubble' }, [
+      h('a', { href, target: '_blank', rel: 'noopener noreferrer', title: href }, [shown]),
+      h('button', {
+        class: 'link-remove',
+        title: lang === 'it' ? 'Rimuovi il link' : 'Remove link',
+        onmousedown: (e) => {
+          e.preventDefault();
+          snapshot();
+          unlink(a, host);
+          closeLinkBubble();
+        },
+      }, ['×']),
+    ]);
+    const r = a.getBoundingClientRect();
+    const base = root.getBoundingClientRect();
+    bubble.style.left = `${r.left - base.left}px`;
+    bubble.style.top = `${r.bottom - base.top + 6}px`;
+    root.append(bubble);
+    linkBubble = bubble;
+  }
+
+  root.addEventListener('click', (e) => {
+    const a = e.target.closest?.('a');
+    if (a && root.contains(a) && a.closest('[contenteditable="true"]')) {
+      e.preventDefault();                                  // don't follow it while editing
+      showLinkBubble(a, a.closest('[contenteditable="true"]'));
+      return;
+    }
+    if (!e.target.closest('.link-bubble')) closeLinkBubble();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLinkBubble(); });
+
   // ── persistent formatting toolbar ─────────────────────────────────────────
   // Pinned above the canvas rather than floating on selection, so the controls
   // are always in the same place. execCommand is deprecated but remains the
@@ -207,7 +258,9 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       h('span', { class: 'fmt-sep' }),
       btn('🔗', t.link, apply(() => {
         const url = prompt(t.link, 'https://');
-        if (url) document.execCommand('createLink', false, url);
+        if (!url) return;
+        snapshot();
+        document.execCommand('createLink', false, url);
       })),
       h('span', { class: 'fmt-sep' }),
       btn('• —', t.ul, cmd('insertUnorderedList'), '', 'insertUnorderedList'),
@@ -780,7 +833,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
 
   // ── full paint ────────────────────────────────────────────────────────────
   function paint() {
-    selected = null; blockMenu = null;
+    selected = null; blockMenu = null; linkBubble = null;
     root.innerHTML = '';
     uploadNotice = h('div', { class: 'canvas-notice' });
     root.append(uploadNotice);
