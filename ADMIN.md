@@ -91,8 +91,25 @@ It opens a menu showing a miniature of each one — body text, sub-heading
 what you are inserting before you insert it. Choosing from a **+** between two
 blocks drops the new element at that point rather than at the end.
 
-A formatting toolbar is pinned above the canvas — bold, italic, link, remove
-link, clear — and the article scrolls underneath it. It releases once you scroll
+A formatting toolbar is pinned above the canvas and the article scrolls
+underneath it:
+
+| | |
+|---|---|
+| Style | Paragrafo · Sottotitolo H3 · Sottotitolo H4 · Citazione — converts the block the cursor is in |
+| Text | bold, italic, underline |
+| Links | insert, remove |
+| Lists | bulleted, numbered |
+| | clear formatting |
+| **+ Inserisci** | the same element picker as the "+" between blocks, inserting after the current block |
+
+Turning a paragraph into a list swaps its host element from `<p>` to a `<div>`,
+because `<ul>` inside `<p>` is invalid and browsers unnest it; the renderer
+emits such a block without the paragraph wrapper for the same reason.
+
+Video blocks take a YouTube or Vimeo URL and render a responsive 16:9 embed —
+YouTube through `youtube-nocookie.com`. Anything that is not a recognisable
+video URL is rejected rather than embedded blindly. It releases once you scroll
 past the end of the article into the metadata.
 
 The toolbar acts on whichever block holds the current selection, derived from

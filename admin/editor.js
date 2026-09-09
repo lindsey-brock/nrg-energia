@@ -7,9 +7,9 @@
 
 const BLOCK_LABELS = {
   it: { p: 'Paragrafo', quote: 'Citazione', rates: 'Percentuali', icons: 'Elenco con icone',
-        figure: 'Immagine', callout: 'Box informativo', heading: 'Sottotitolo' },
+        figure: 'Immagine', callout: 'Box informativo', heading: 'Sottotitolo', video: 'Video' },
   en: { p: 'Paragraph', quote: 'Quote', rates: 'Rate cards', icons: 'Icon list',
-        figure: 'Image', callout: 'Callout box', heading: 'Sub-heading' },
+        figure: 'Image', callout: 'Callout box', heading: 'Sub-heading', video: 'Video' },
 };
 
 const ICON_SVG = {
@@ -18,6 +18,15 @@ const ICON_SVG = {
   route:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-4 3-5 6-5s6-1 6-5"/><circle cx="4" cy="20" r="2"/><circle cx="16" cy="6" r="2"/><path d="M20 10h-2M20 14h-5"/></svg>',
   shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.3-2.9 7.8-7 9.5-4.1-1.7-7-5.2-7-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>',
 };
+
+function toEmbed(raw = '') {
+  const url = String(raw).trim();
+  let m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/);
+  if (m) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+  m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return `https://player.vimeo.com/video/${m[1]}`;
+  return '';
+}
 
 const cloudinary = (id, w = 1200) =>
   id ? `https://res.cloudinary.com/dmegrbq5k/image/upload/q_auto,f_auto,w_${w}/${id}` : '';
@@ -65,62 +74,110 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   }
 
   const TOOLS = {
-    it: { bold: 'Grassetto', italic: 'Corsivo', link: 'Inserisci link', unlink: 'Rimuovi link',
-          clear: 'Togli formattazione', hint: 'Seleziona del testo per formattarlo' },
-    en: { bold: 'Bold', italic: 'Italic', link: 'Insert link', unlink: 'Remove link',
-          clear: 'Clear formatting', hint: 'Select text to format it' },
+    it: { style: 'Stile', para: 'Paragrafo', h3: 'Sottotitolo H3', h4: 'Sottotitolo H4', quote: 'Citazione',
+          bold: 'Grassetto', italic: 'Corsivo', underline: 'Sottolineato',
+          link: 'Inserisci link', unlink: 'Rimuovi link', ul: 'Elenco puntato', ol: 'Elenco numerato',
+          clear: 'Togli formattazione', insert: 'Inserisci', hint: 'Seleziona del testo per formattarlo' },
+    en: { style: 'Style', para: 'Paragraph', h3: 'Heading H3', h4: 'Heading H4', quote: 'Quote',
+          bold: 'Bold', italic: 'Italic', underline: 'Underline',
+          link: 'Insert link', unlink: 'Remove link', ul: 'Bulleted list', ol: 'Numbered list',
+          clear: 'Clear formatting', insert: 'Insert', hint: 'Select text to format it' },
   };
+
+  /** The block wrapper holding the current selection, if any. */
+  function activeBlockEl() {
+    return activeEditable?.closest?.('.blk') || null;
+  }
 
   function buildToolbar() {
     const t = TOOLS[lang];
     const bar = h('div', { class: 'fmt-toolbar' });
 
-    // mousedown + preventDefault keeps the selection alive through the click
-    const cmd = (name, arg) => (e) => {
+    const apply = (fn) => (e) => {
       e.preventDefault();
       if (!activeEditable) return;
-      document.execCommand(name, false, arg);
+      fn();
       normalise(activeEditable);
       activeEditable.dispatchEvent(new Event('input', { bubbles: true }));
       syncState();
     };
+    const cmd = (name, arg) => apply(() => document.execCommand(name, false, arg));
 
-    const btn = (label, title, name, cls = '') => h('button', {
-      class: `fmt-btn ${cls}`, title, 'data-cmd': name, onmousedown: cmd(name),
+    // ── style dropdown: converts the block the cursor is in ──────────────────
+    const style = h('select', { class: 'fmt-style', title: t.style });
+    for (const [v, label] of [['p', t.para], ['h3', t.h3], ['h4', t.h4], ['quote', t.quote]]) {
+      style.append(h('option', { value: v }, [label]));
+    }
+    style.addEventListener('change', () => {
+      const el = activeBlockEl();
+      if (!el?._block) { syncState(); return; }
+      const block = el._block;
+      const v = style.value;
+      const html = block.html ?? '';
+      if (v === 'p') { block.type = 'p'; delete block.level; }
+      else if (v === 'quote') { block.type = 'quote'; delete block.level; }
+      else { block.type = 'heading'; block.level = v === 'h3' ? 3 : 4; }
+      block.html = html;
+      touch(); paint();
+    });
+
+    const btn = (label, title, onDown, cls = '', data = null) => h('button', {
+      class: `fmt-btn ${cls}`, title, ...(data ? { 'data-cmd': data } : {}), onmousedown: onDown,
     }, [label]);
 
-    const boldBtn = btn('B', t.bold, 'bold', 'bold');
-    const italBtn = btn('I', t.italic, 'italic', 'ital');
-
-    const linkBtn = h('button', {
-      class: 'fmt-btn', title: t.link,
-      onmousedown: (e) => {
-        e.preventDefault();
-        if (!activeEditable) return;
-        const url = prompt(t.link, 'https://');
-        if (!url) return;
-        document.execCommand('createLink', false, url);
-        normalise(activeEditable);
-        activeEditable.dispatchEvent(new Event('input', { bubbles: true }));
-      },
-    }, ['🔗']);
+    // ── insert menu, mirroring the "+" between blocks ────────────────────────
+    const insertWrap = h('div', { class: 'fmt-insert' });
+    const insertBtn = h('button', { class: 'fmt-btn wide', title: t.insert }, [`+ ${t.insert}`]);
+    insertWrap.append(insertBtn);
+    insertBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (insertWrap.querySelector('.add-menu')) { closeMenu(); return; }
+      closeMenu();
+      const el = activeBlockEl();
+      const section = el?._section || langData.sections[langData.sections.length - 1];
+      const at = el ? section.blocks.indexOf(el._block) + 1 : null;
+      const menu = buildInsertMenu(section, at);
+      insertWrap.append(menu);
+      openMenu = menu;
+    });
 
     bar.append(
-      boldBtn, italBtn, linkBtn,
-      btn('⌦', t.unlink, 'unlink'),
+      style,
       h('span', { class: 'fmt-sep' }),
-      btn('⌫', t.clear, 'removeFormat'),
+      btn('B', t.bold, cmd('bold'), 'bold', 'bold'),
+      btn('I', t.italic, cmd('italic'), 'ital', 'italic'),
+      btn('U', t.underline, cmd('underline'), 'under', 'underline'),
+      h('span', { class: 'fmt-sep' }),
+      btn('🔗', t.link, apply(() => {
+        const url = prompt(t.link, 'https://');
+        if (url) document.execCommand('createLink', false, url);
+      })),
+      btn('⌦', t.unlink, cmd('unlink')),
+      h('span', { class: 'fmt-sep' }),
+      btn('• —', t.ul, cmd('insertUnorderedList'), '', 'insertUnorderedList'),
+      btn('1. —', t.ol, cmd('insertOrderedList'), '', 'insertOrderedList'),
+      h('span', { class: 'fmt-sep' }),
+      btn('⌫', t.clear, cmd('removeFormat')),
+      h('span', { class: 'fmt-sep' }),
+      insertWrap,
       h('span', { class: 'fmt-hint' }, [t.hint]),
     );
 
     function syncState() {
       for (const b of bar.querySelectorAll('.fmt-btn[data-cmd]')) {
-        const name = b.dataset.cmd;
-        if (name !== 'bold' && name !== 'italic') continue;
         let on = false;
-        try { on = document.queryCommandState(name); } catch { /* ignore */ }
+        try { on = document.queryCommandState(b.dataset.cmd); } catch { /* ignore */ }
         b.classList.toggle('on', on);
       }
+      const el = activeBlockEl();
+      const block = el?._block;
+      style.value = !block ? 'p'
+        : block.type === 'quote' ? 'quote'
+        : block.type === 'heading' ? (Number(block.level) === 4 ? 'h4' : 'h3')
+        : 'p';
+      // the style dropdown only means something for text blocks
+      const textual = !block || ['p', 'quote', 'heading'].includes(block.type);
+      style.disabled = !textual;
       bar.classList.toggle('armed', Boolean(activeEditable));
     }
 
@@ -144,6 +201,8 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       else if (activeEditable && !root.contains(activeEditable)) activeEditable = null;
       syncState();
     });
+
+    syncState();
     return bar;
   }
 
@@ -163,6 +222,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   // ── one block ─────────────────────────────────────────────────────────────
   function renderBlock(block, section, index) {
     const wrap = h('div', { class: 'blk', draggable: 'true', 'data-index': index });
+    wrap._block = block; wrap._section = section;   // the toolbar reads these
 
     wrap.append(h('div', { class: 'blk-handle', title: 'Trascina per riordinare' }, ['⠿']));
     wrap.append(h('div', { class: 'blk-kind' }, [L[block.type] || block.type]));
@@ -176,9 +236,17 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
 
     let body;
     switch (block.type) {
-      case 'p':
-        body = editable('p', block.html, (v) => { block.html = v; });
+      case 'p': {
+        // a list can't live inside <p>, so switch the host element once it is one
+        const isList = /^<(ul|ol)[\s>]/i.test((block.html || '').trim());
+        body = editable(isList ? 'div' : 'p', block.html, (v) => {
+          const wasList = isList;
+          block.html = v;
+          // repaint when it crosses between paragraph and list so the host matches
+          if (/^<(ul|ol)[\s>]/i.test(v.trim()) !== wasList) { touch(); paint(); }
+        }, isList ? 'rich-list' : '');
         break;
+      }
       case 'quote':
         body = editable('blockquote', block.html, (v) => { block.html = v; }, 'pull-quote');
         break;
@@ -210,6 +278,22 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
             class: 'level-pick', title: 'Livello',
             onchange: (e) => { block.level = Number(e.target.value); touch(); paint(); },
           }, [3, 4].map((n) => h('option', { value: n, selected: n === level }, [`H${n}`]))),
+        ]);
+        break;
+      }
+      case 'video': {
+        const src = toEmbed(block.url || '');
+        body = h('figure', { class: 'article-video' }, [
+          h('div', { class: 'frame' }, [
+            src ? h('iframe', { src, allowfullscreen: true, loading: 'lazy' })
+                : h('div', { class: 'img-empty' }, [lang === 'it' ? 'Incolla un link YouTube o Vimeo' : 'Paste a YouTube or Vimeo link']),
+          ]),
+          (() => {
+            const input = h('input', { class: 'video-url', type: 'url', placeholder: 'https://youtube.com/watch?v=…' });
+            input.value = block.url || '';
+            input.addEventListener('change', () => { block.url = input.value; touch(); paint(); });
+            return input;
+          })(),
         ]);
         break;
       }
@@ -330,7 +414,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
   // ── add-block menu ────────────────────────────────────────────────────────
   // One "+" per section opens a menu that shows what each element looks like,
   // rather than a row of seven buttons repeated down the page.
-  const BLOCK_ORDER = ['p', 'heading', 'quote', 'callout', 'rates', 'icons', 'figure'];
+  const BLOCK_ORDER = ['p', 'heading', 'quote', 'callout', 'rates', 'icons', 'figure', 'video'];
 
   const PREVIEW = {
     p:       '<span class="pv-line w90"></span><span class="pv-line w100"></span><span class="pv-line w70"></span>',
@@ -340,19 +424,21 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     rates:   '<span class="pv-rates"><b>50%</b><b class="alt">36%</b></span>',
     icons:   '<span class="pv-icons"><i></i><i></i><i></i><i></i></span>',
     figure:  '<span class="pv-img"></span>',
+    video:   '<span class="pv-img pv-video"><b>&#9654;</b></span>',
   };
 
   const HINT = {
     it: { p: 'Testo normale', heading: 'Titolo di terzo livello', quote: 'Frase in evidenza',
           callout: 'Riquadro verde', rates: 'Due percentuali affiancate',
-          icons: 'Quattro voci con icona', figure: 'Foto a tutta larghezza' },
+          icons: 'Quattro voci con icona', figure: 'Foto a tutta larghezza', video: 'YouTube o Vimeo' },
     en: { p: 'Body text', heading: 'Third-level heading', quote: 'Pulled-out sentence',
           callout: 'Green highlight box', rates: 'Two figures side by side',
-          icons: 'Four items with icons', figure: 'Full-width photo' },
+          icons: 'Four items with icons', figure: 'Full-width photo', video: 'YouTube or Vimeo' },
   };
 
   function makeBlock(type) {
     if (type === 'p' || type === 'quote' || type === 'callout') return { type, html: '' };
+    if (type === 'video') return { type, url: '' };
     if (type === 'heading') return { type, level: 3, html: '' };
     if (type === 'rates') return { type, items: [{ value: '50%', label: '' }, { value: '36%', label: '', variant: 'alt' }] };
     if (type === 'icons') return { type, items: [{ icon: 'panel', label: '' }, { icon: 'shield', label: '' }] };
@@ -374,30 +460,37 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       e.stopPropagation();
       if (openMenu?.dataset.owner === String(atIndex) && openMenu.parentElement === wrap) { closeMenu(); return; }
       closeMenu();
-      const menu = h('div', { class: 'add-menu' });
-      menu.dataset.owner = String(atIndex);
-      menu.append(h('div', { class: 'add-menu-title' }, [lang === 'it' ? 'Aggiungi elemento' : 'Add element']));
-      const grid = h('div', { class: 'add-grid' });
-      for (const type of BLOCK_ORDER) {
-        grid.append(h('button', {
-          class: 'add-card',
-          onclick: () => {
-            const block = makeBlock(type);
-            if (atIndex === null) section.blocks.push(block);
-            else section.blocks.splice(atIndex, 0, block);
-            closeMenu(); touch(); paint();
-          },
-        }, [
-          h('span', { class: 'pv', html: PREVIEW[type] }),
-          h('span', { class: 'add-card-name' }, [L[type]]),
-          h('span', { class: 'add-card-hint' }, [HINT[lang][type]]),
-        ]));
-      }
-      menu.append(grid);
+      const menu = buildInsertMenu(section, atIndex);
       wrap.append(menu);
       openMenu = menu;
     });
     return wrap;
+  }
+
+  /** The element picker, shared by the toolbar and the "+" between blocks. */
+  function buildInsertMenu(section, atIndex) {
+    const menu = h('div', { class: 'add-menu' });
+    menu.dataset.owner = String(atIndex);
+    menu.append(h('div', { class: 'add-menu-title' }, [lang === 'it' ? 'Aggiungi elemento' : 'Add element']));
+    const grid = h('div', { class: 'add-grid' });
+    for (const type of BLOCK_ORDER) {
+      grid.append(h('button', {
+        class: 'add-card',
+        onmousedown: (e) => e.preventDefault(),   // keep the caret where it is
+        onclick: () => {
+          const block = makeBlock(type);
+          if (atIndex === null || atIndex < 0) section.blocks.push(block);
+          else section.blocks.splice(atIndex, 0, block);
+          closeMenu(); touch(); paint();
+        },
+      }, [
+        h('span', { class: 'pv', html: PREVIEW[type] }),
+        h('span', { class: 'add-card-name' }, [L[type]]),
+        h('span', { class: 'add-card-hint' }, [HINT[lang][type]]),
+      ]));
+    }
+    menu.append(grid);
+    return menu;
   }
 
   // ── full paint ────────────────────────────────────────────────────────────

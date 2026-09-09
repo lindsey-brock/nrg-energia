@@ -46,6 +46,17 @@ const esc = (s = '') => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const escAttr = (s = '') => esc(s).replace(/"/g, '&quot;');
 
+/** Accepts a YouTube or Vimeo URL and returns its privacy-friendly embed form. */
+export function embedUrl(raw = '') {
+  const url = String(raw).trim();
+  if (!url) return '';
+  let m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/);
+  if (m) return `https://www.youtube-nocookie.com/embed/${m[1]}`;
+  m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (m) return `https://player.vimeo.com/video/${m[1]}`;
+  return '';
+}
+
 // ── SEO head block ───────────────────────────────────────────────────────────
 const OG_ALT = {
   it: (post) => `/blog/${post.it.slug}`,
@@ -93,14 +104,33 @@ export function postUrl(post, lang, from) {
 // ── content blocks ───────────────────────────────────────────────────────────
 function renderBlock(block, post, lang) {
   switch (block.type) {
-    case 'p':
-      return `        <p>${block.html}</p>`;
+    case 'p': {
+      // the toolbar can turn a paragraph into a list; <ul> inside <p> is invalid
+      // HTML and browsers unnest it, so emit the list on its own
+      const html = (block.html || '').trim();
+      if (/^<(ul|ol)[\s>]/i.test(html)) return `        ${html}`;
+      return `        <p>${html}</p>`;
+    }
     case 'quote':
       return `        <blockquote class="pull-quote">${block.html}</blockquote>`;
     case 'heading': {
       const level = [3, 4].includes(Number(block.level)) ? Number(block.level) : 3;
       const id = block.id ? ` id="${block.id}"` : '';
       return `        <h${level}${id}>${block.html}</h${level}>`;
+    }
+    case 'video': {
+      const src = embedUrl(block.url);
+      if (!src) return '';
+      const L = post[lang];
+      return [
+        '        <figure class="article-video">',
+        '          <div class="frame">',
+        `            <iframe src="${src}" title="${escAttr(block.title || L.title)}" loading="lazy" allowfullscreen`,
+        '                    allow="accelerometer; clipboard-write; encrypted-media; picture-in-picture"></iframe>',
+        '          </div>',
+        block.caption ? `          <figcaption>${esc(block.caption)}</figcaption>` : null,
+        '        </figure>',
+      ].filter(Boolean).join('\n');
     }
     case 'callout':
       return [
