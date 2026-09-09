@@ -254,12 +254,90 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     return n;
   }
 
+  // ── block selection ───────────────────────────────────────────────────────
+  // A selected block can be removed with Backspace or Delete. The key handler
+  // ignores everything typed inside text, so editing never deletes a block.
+  let selected = null;
+
+  function selectBlock(el) {
+    if (selected === el) return;
+    clearSelection();
+    selected = el;
+    el.classList.add('selected');
+  }
+  function clearSelection() {
+    selected?.classList.remove('selected');
+    selected = null;
+    closeBlockMenu();
+  }
+
+  let blockMenu = null;
+  function closeBlockMenu() { blockMenu?.remove(); blockMenu = null; }
+
+  function openBlockMenu(el, section, block, x, y) {
+    closeBlockMenu();
+    const menu = h('div', { class: 'blk-menu' }, [
+      h('button', {
+        class: 'blk-menu-item danger',
+        onclick: () => { closeBlockMenu(); clearSelection(); removeBlock(section, block); touch(); paint(); },
+      }, [lang === 'it' ? 'Elimina elemento' : 'Delete element']),
+      h('button', {
+        class: 'blk-menu-item',
+        onclick: () => {
+          closeBlockMenu();
+          insertBlock(section, section.blocks.indexOf(block) + 1, structuredClone(block));
+          touch(); paint();
+        },
+      }, [lang === 'it' ? 'Duplica' : 'Duplicate']),
+    ]);
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    el.append(menu);
+    blockMenu = menu;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { clearSelection(); return; }
+    if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+    if (!selected || !root.contains(selected)) return;
+    // never intercept a keystroke meant for text
+    const a = document.activeElement;
+    if (a && (a.isContentEditable || a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT')) return;
+    e.preventDefault();
+    const el = selected;
+    clearSelection();
+    removeBlock(el._section, el._block);
+    touch(); paint();
+  });
+
+  // clicking outside the canvas drops the selection
+  document.addEventListener('mousedown', (e) => {
+    if (selected && !e.target.closest('.blk')) clearSelection();
+  });
+
   // ── one block ─────────────────────────────────────────────────────────────
   function renderBlock(block, section, index) {
     const wrap = h('div', { class: 'blk', draggable: 'true', 'data-index': index });
     wrap._block = block; wrap._section = section;   // the toolbar reads these
 
-    wrap.append(h('div', { class: 'blk-handle', title: 'Trascina per riordinare' }, ['⠿']));
+    wrap.append(h('div', {
+      class: 'blk-handle',
+      title: lang === 'it' ? 'Trascina per riordinare, clicca per selezionare' : 'Drag to reorder, click to select',
+      onmousedown: (e) => { e.stopPropagation(); selectBlock(wrap); },
+    }, ['⠿']));
+
+    // clicking the block's own chrome selects it; clicking its text does not
+    wrap.addEventListener('mousedown', (e) => {
+      if (e.target.closest('[contenteditable], input, select, button')) { clearSelection(); return; }
+      selectBlock(wrap);
+    });
+    wrap.addEventListener('dblclick', (e) => {
+      if (e.target.closest('[contenteditable], input, select, button')) return;
+      e.preventDefault();
+      const r = wrap.getBoundingClientRect();
+      selectBlock(wrap);
+      openBlockMenu(wrap, section, block, e.clientX - r.left, e.clientY - r.top);
+    });
     wrap.append(h('div', { class: 'blk-kind' }, [L[block.type] || block.type]));
     wrap.append(h('button', {
       class: 'blk-del', title: 'Elimina blocco',
@@ -615,6 +693,7 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
 
   // ── full paint ────────────────────────────────────────────────────────────
   function paint() {
+    selected = null; blockMenu = null;
     root.innerHTML = '';
     uploadNotice = h('div', { class: 'canvas-notice' });
     root.append(uploadNotice);

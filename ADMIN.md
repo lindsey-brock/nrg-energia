@@ -92,6 +92,12 @@ The save button follows the publish toggle — **Salva e pubblica** when the pos
 is live, **Salva bozza** when it is not — so it never claims to publish
 something it is only filing away.
 
+Removing an element: click its drag handle to select it — it highlights and the
+label reads "backspace per eliminare" — then press Backspace or Delete. Escape
+deselects, and clicking into any text clears the selection, so a keystroke meant
+for writing can never remove a block. Double-clicking a block's chrome opens a
+small menu with Delete and Duplicate. The hover × is still there.
+
 Elements are added from a single **+** that appears between blocks on hover.
 It opens a menu showing a miniature of each one — body text, sub-heading
 (H3/H4), pull quote, callout box, rate cards, icon list, image — so it is clear
