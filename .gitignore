@@ -6,6 +6,9 @@
 ~$*.xlsx
 ~$*.pptx
 
+# Installed dependencies
+node_modules/
+
 # Local secrets for the admin (never commit)
 .env
 .env*.local
