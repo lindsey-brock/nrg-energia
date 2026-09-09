@@ -1,5 +1,6 @@
 // Renders the blog HTML from content/posts.json.
 import { metaBlock, photoCard, brandAsset } from './seo-meta.mjs';
+import { ICONS } from './icons.mjs';
 // Used by scripts/build.mjs (CLI) and api/admin/publish.js (admin dashboard).
 
 const CLOUD = (typeof process !== 'undefined' && process.env?.CLOUDINARY_CLOUD_NAME) || 'dmegrbq5k';
@@ -29,12 +30,6 @@ const T = {
         office: 'NRG Energia technical office' },
 };
 
-const ICONS = {
-  panel:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1"/><path d="M3 8.3h18M3 12.7h18M9 4v13M15 4v13M12 17v3M9 20h6"/></svg>',
-  fixing: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4l-2 2v9l-1 3-1-3V9L9 7z"/><path d="M9 5.5h6M9 7h6"/></svg>',
-  route:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-4 3-5 6-5s6-1 6-5"/><circle cx="4" cy="20" r="2"/><circle cx="16" cy="6" r="2"/><path d="M20 10h-2M20 14h-5"/></svg>',
-  shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.3-2.9 7.8-7 9.5-4.1-1.7-7-5.2-7-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>',
-};
 
 const tagClass = (category) => (category === 'coperture' ? ' blue' : '');
 

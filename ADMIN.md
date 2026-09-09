@@ -138,6 +138,14 @@ the gap opens up and shows a drop cue while you drag over it. Each image block
 carries its own photo, so a post can hold as many supplementary images as it
 needs.
 
+Each row of an icon list has its own icon: click the glyph to open a picker of
+18, grouped by theme — panels, sun, storage, electricity; roofing, home,
+industrial, environment; fixings, maintenance, routes, documents; safety,
+protection, warning, compliance; cost, timing. Rows can be added and removed.
+
+The set lives in `scripts/icons.mjs` and is imported by both the renderer and
+the editor, so the picker can only offer icons the site can actually draw.
+
 Structural edits — adding, deleting, reordering blocks and sections — are
 applied to **both** languages. "Genera versione inglese" pairs blocks by
 position, so if Italian and English drifted apart the translation would start

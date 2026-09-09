@@ -1,3 +1,5 @@
+import { ICONS, ICON_ORDER, ICON_LABELS } from '../scripts/icons.mjs';
+
 // Canvas editor for blog posts.
 //
 // Renders the article body with the site's own CSS and makes it editable in
@@ -12,12 +14,6 @@ const BLOCK_LABELS = {
         figure: 'Image', callout: 'Callout box', heading: 'Sub-heading', video: 'Video' },
 };
 
-const ICON_SVG = {
-  panel:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="1"/><path d="M3 8.3h18M3 12.7h18M9 4v13M15 4v13M12 17v3M9 20h6"/></svg>',
-  fixing: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6v4l-2 2v9l-1 3-1-3V9L9 7z"/><path d="M9 5.5h6M9 7h6"/></svg>',
-  route:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c0-4 3-5 6-5s6-1 6-5"/><circle cx="4" cy="20" r="2"/><circle cx="16" cy="6" r="2"/><path d="M20 10h-2M20 14h-5"/></svg>',
-  shield: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.3-2.9 7.8-7 9.5-4.1-1.7-7-5.2-7-9.5V6z"/><path d="M9.2 12l2 2 3.6-3.8"/></svg>',
-};
 
 function toEmbed(raw = '') {
   const url = String(raw).trim();
@@ -301,12 +297,43 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
       }
       case 'icons': {
         body = h('div', { class: 'icon-grid' });
-        block.items.forEach((item) => {
-          body.append(h('div', { class: 'icon-card' }, [
-            h('span', { class: 'icon-slot', html: ICON_SVG[item.icon] || '' }),
+        block.items.forEach((item, ii) => {
+          const swatch = h('button', {
+            class: 'icon-pick', title: lang === 'it' ? 'Cambia icona' : 'Change icon',
+            onclick: (e) => { e.stopPropagation(); openIconMenu(swatch, section, block, ii); },
+          }, [
+            h('span', { class: 'icon-slot', html: ICONS[item.icon] || '' }),
+            h('span', { class: 'icon-caret' }, ['⌄']),
+          ]);
+          const card = h('div', { class: 'icon-card' }, [
+            swatch,
             editable('span', item.label, (v) => { item.label = v; }),
-          ]));
+          ]);
+          if (block.items.length > 1) {
+            card.append(h('button', {
+              class: 'icon-remove', title: lang === 'it' ? 'Rimuovi voce' : 'Remove item',
+              onclick: () => {
+                block.items.splice(ii, 1);
+                const m = mirrorOf(section);
+                const bi = section.blocks.indexOf(block);
+                m?.blocks[bi]?.items?.splice(ii, 1);
+                touch(); paint();
+              },
+            }, ['×']));
+          }
+          body.append(card);
         });
+        body.append(h('button', {
+          class: 'icon-add',
+          onclick: () => {
+            const fresh = { icon: 'check', label: '' };
+            block.items.push(fresh);
+            const m = mirrorOf(section);
+            const bi = section.blocks.indexOf(block);
+            m?.blocks[bi]?.items?.push(structuredClone(fresh));
+            touch(); paint();
+          },
+        }, [lang === 'it' ? '+ Voce' : '+ Item']));
         break;
       }
       case 'heading': {
@@ -412,6 +439,39 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     uploadNotice.textContent = text;
     uploadNotice.className = `canvas-notice show ${kind}`;
     if (kind !== 'busy') setTimeout(() => uploadNotice.classList.remove('show'), 3500);
+  }
+
+  // ── icon picker ───────────────────────────────────────────────────────────
+  let iconMenu = null;
+  function closeIconMenu() { iconMenu?.remove(); iconMenu = null; }
+  document.addEventListener('click', (e) => {
+    if (iconMenu && !iconMenu.contains(e.target) && !e.target.closest('.icon-pick')) closeIconMenu();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeIconMenu(); });
+
+  function openIconMenu(anchor, section, block, itemIndex) {
+    if (iconMenu?.dataset.owner === `${section.id}-${itemIndex}`) { closeIconMenu(); return; }
+    closeIconMenu();
+    const menu = h('div', { class: 'icon-menu' });
+    menu.dataset.owner = `${section.id}-${itemIndex}`;
+    const current = block.items[itemIndex].icon;
+    for (const key of ICON_ORDER) {
+      menu.append(h('button', {
+        class: `icon-opt${key === current ? ' on' : ''}`,
+        title: ICON_LABELS[lang][key] || key,
+        onclick: () => {
+          block.items[itemIndex].icon = key;
+          // the icon is structural, so it applies to both languages
+          const m = mirrorOf(section);
+          const bi = section.blocks.indexOf(block);
+          const twin = m?.blocks[bi]?.items?.[itemIndex];
+          if (twin) twin.icon = key;
+          closeIconMenu(); touch(); paint();
+        },
+      }, [h('span', { html: ICONS[key] })]));
+    }
+    anchor.append(menu);
+    iconMenu = menu;
   }
 
   // ── media library ─────────────────────────────────────────────────────────
