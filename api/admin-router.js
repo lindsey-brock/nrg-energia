@@ -6,8 +6,10 @@
 // vercel.json rewrites /api/admin/<name> here with ?route=<name>.
 //
 // A dynamic route (api/admin/[...path].js) would express this more directly,
-// but did not resolve on this deployment — every /api/admin/* request 404'd.
-// A rewrite onto a plain function needs no dynamic-route support at all.
+// but did not resolve on this project: every /api/admin/* request returned
+// Vercel's 404 while a plain file in the same directory answered fine, so the
+// catch-all itself was the problem, not the nesting. A rewrite onto an ordinary
+// function needs no dynamic-route support at all.
 
 import competitor from './admin/_competitor.js';
 import content from './admin/_content.js';
