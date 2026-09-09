@@ -725,7 +725,8 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
     document.body.append(overlay);
 
     try {
-      const r = await fetch('/api/admin/media?limit=60').then((x) => x.json());
+      // the canvas places stills, so ask for images only
+      const r = await fetch('/api/admin/media?limit=60&kind=image').then((x) => x.json());
       grid.innerHTML = '';
       if (!r.images?.length) { grid.append(h('div', { class: 'lib-empty' }, ['Nessuna immagine.'])); return; }
       for (const im of r.images) {

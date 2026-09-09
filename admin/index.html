@@ -218,8 +218,19 @@
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; grid-row:span 2; text-align:center; color:var(--text-light);
                  font-size:14px; align-self:center; }
-    .lib-note { font-size:12px; color:var(--text-light); padding:0 20px 16px; margin:0;
-                border-top:1px solid var(--warm-gray); padding-top:12px; }
+    .lib-foot { display:flex; align-items:center; gap:12px; flex-wrap:wrap; flex:none;
+                padding:12px 20px 16px; border-top:1px solid var(--warm-gray); }
+    .lib-note { font-size:12px; color:var(--text-light); margin:0; flex-basis:100%; }
+    .lib-status { font-size:12.5px; color:var(--text-light); }
+    .lib-status.busy { color:var(--text-mid); }
+    .lib-status.ok  { color:var(--green-dark); }
+    .lib-status.err { color:var(--red); }
+    .lib.drop { outline:2px dashed var(--green-mid); outline-offset:-6px; }
+    .lib.drop .lib-grid { background:var(--green-pale); }
+    .lib-item.is-video { position:relative; }
+    .lib-play { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+                color:#fff; font-size:19px; line-height:1; text-shadow:0 1px 6px rgba(0,0,0,.6);
+                background:rgba(10,25,18,.18); pointer-events:none; }
 
     /* article preview */
     .preview-overlay { position:fixed; inset:0; z-index:120; background:rgba(10,25,18,.72);
@@ -756,11 +767,25 @@ const FIELDS = [
   ['lead', 'Paragrafo introduttivo', 'textarea'],
 ];
 
-async function uploadImage(file) {
-  const sig = await api('upload');
+const isVideoFile = (file) => file.type.startsWith('video/');
+const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+
+/**
+ * Uploads one file to Cloudinary and returns { id, kind }.
+ * The size caps come from the server, which knows the account's plan.
+ */
+async function uploadMedia(file) {
+  const kind = isVideoFile(file) ? 'video' : 'image';
+  const sig = await api(`upload?kind=${kind}`);
   if (!sig.configured) {
-    throw new Error(`Upload non configurato: mancano ${sig.missing.join(', ')}`);
+    throw new Error(`Caricamento non configurato: mancano ${sig.missing.join(', ')}`);
   }
+  const capMB = kind === 'video' ? sig.limits.videoMB : sig.limits.imageMB;
+  if (file.size > capMB * 1048576) {
+    throw new Error(`${kind === 'video' ? 'Il video' : 'L’immagine'} pesa ${mb(file.size)}: `
+      + `il limite Cloudinary è ${capMB} MB.`);
+  }
+
   const fd = new FormData();
   fd.append('file', file);
   fd.append('api_key', sig.apiKey);
@@ -769,9 +794,14 @@ async function uploadImage(file) {
   fd.append('signature', sig.signature);
   const r = await fetch(sig.uploadUrl, { method: 'POST', body: fd });
   const body = await r.json();
-  if (!r.ok) throw new Error(body.error?.message || 'Upload fallito');
-  // store "<version>/<public_id>.<ext>" to match how the site references images
-  return `v${body.version}/${body.public_id}.${body.format}`;
+  if (!r.ok) throw new Error(body.error?.message || 'Caricamento fallito');
+  // store "<version>/<public_id>.<ext>" to match how the site references media
+  return { id: `v${body.version}/${body.public_id}.${body.format}`, kind };
+}
+
+/** Existing callers place stills and expect just the id. */
+async function uploadImage(file) {
+  return (await uploadMedia(file)).id;
 }
 
 /**
@@ -1198,33 +1228,93 @@ function projectRow(p) {
 // Cloudinary ids are an implementation detail; nobody editing the site should
 // ever have to see or type one.
 
-function pickFromLibrary(onPick) {
+/**
+ * The media library. `accept` is 'image' where only a still can be placed —
+ * a portfolio cover cannot hold a video — and 'all' where either works.
+ */
+function pickFromLibrary(onPick, { accept = 'image' } = {}) {
   const overlay = el('div', { class: 'lib-overlay', onclick: (e) => { if (e.target === overlay) overlay.remove(); } });
   const grid = el('div', { class: 'lib-grid' }, [el('div', { class: 'lib-empty', html: 'Caricamento…' })]);
-  overlay.append(el('div', { class: 'lib' }, [
+  const foot = el('div', { class: 'lib-foot' });
+  const status = el('span', { class: 'lib-status' });
+
+  const input = el('input', {
+    type: 'file', hidden: '', multiple: '',
+    accept: accept === 'image' ? 'image/*' : 'image/*,video/*',
+  });
+  const addBtn = el('button', { class: 'btn btn-primary btn-sm', onclick: () => input.click() },
+    [accept === 'image' ? 'Aggiungi immagine' : 'Aggiungi immagine o video']);
+
+  const panel = el('div', { class: 'lib' }, [
     el('div', { class: 'lib-head' }, [
       el('strong', {}, ['Libreria immagini']),
       el('button', { class: 'lib-close', onclick: () => overlay.remove() }, ['×']),
     ]),
     grid,
-  ]));
+    foot,
+  ]);
+  overlay.append(panel);
   document.body.append(overlay);
 
-  api('media?limit=60').then((r) => {
+  const tile = (im) => {
+    const t = el('button', { class: `lib-item${im.kind === 'video' ? ' is-video' : ''}`, title: im.publicId },
+      [el('img', { src: im.thumb, alt: '', loading: 'lazy' })]);
+    if (im.kind === 'video') t.append(el('span', { class: 'lib-play', html: '▶' }));
+    t.addEventListener('click', () => { onPick(im.id, im.kind); overlay.remove(); });
+    return t;
+  };
+
+  const say = (text, tone = '') => { status.textContent = text; status.className = `lib-status ${tone}`; };
+
+  const load = () => api(`media?limit=60&kind=${accept}`).then((r) => {
     grid.innerHTML = '';
-    if (!r.images?.length) { grid.append(el('div', { class: 'lib-empty', html: 'Nessuna immagine.' })); return; }
-    for (const im of r.images) {
-      grid.append(el('button', {
-        class: 'lib-item', title: im.publicId,
-        onclick: () => { onPick(im.id); overlay.remove(); },
-      }, [el('img', { src: im.thumb, alt: '', loading: 'lazy' })]));
-    }
+    if (!r.images?.length) grid.append(el('div', { class: 'lib-empty', html: 'Nessun file.' }));
+    else for (const im of r.images) grid.append(tile(im));
+
+    foot.innerHTML = '';
     // browsing works without credentials; only uploading needs them
-    if (r.note) grid.after(el('p', { class: 'lib-note', html: esc(r.note) }));
+    addBtn.disabled = !r.canUpload;
+    foot.append(addBtn, status, input);
+    if (r.note) foot.append(el('p', { class: 'lib-note', html: esc(r.note) }));
+    else if (r.canUpload) {
+      say(accept === 'image' ? 'Trascina un file qui per caricarlo'
+        : 'Trascina immagini o video qui per caricarli');
+    }
   }).catch((err) => {
     grid.innerHTML = '';
     grid.append(el('div', { class: 'lib-empty', html: esc(err.message) }));
   });
+
+  const send = async (files) => {
+    const list = [...files].filter((f) =>
+      f.type.startsWith('image/') || (accept !== 'image' && f.type.startsWith('video/')));
+    if (!list.length) { say('Nessun file utilizzabile.', 'err'); return; }
+    let done = 0;
+    for (const f of list) {
+      say(`Caricamento ${done + 1} di ${list.length}: ${f.name}`, 'busy');
+      try { await uploadMedia(f); done += 1; }
+      catch (err) { say(err.message, 'err'); return; }
+    }
+    say(`${done} file caricati`, 'ok');
+    await load();                       // the new files come back from the listing
+  };
+
+  input.addEventListener('change', () => { if (input.files.length) send(input.files); });
+
+  panel.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault(); panel.classList.add('drop');
+  });
+  panel.addEventListener('dragleave', (e) => {
+    if (!panel.contains(e.relatedTarget)) panel.classList.remove('drop');
+  });
+  panel.addEventListener('drop', (e) => {
+    if (!e.dataTransfer.types.includes('Files')) return;
+    e.preventDefault(); panel.classList.remove('drop');
+    send(e.dataTransfer.files);
+  });
+
+  load();
 }
 
 /** Accepts a dropped or chosen file and reports the stored id. */
