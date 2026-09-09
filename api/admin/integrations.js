@@ -1,15 +1,29 @@
 // Reports which marketing sources are wired up, and exactly what each one still
 // needs. Nothing here fabricates metrics: a platform is "connected" only when
 // its credentials are actually present in the environment.
+//
+// Each variable carries enough metadata for the admin to render a real form —
+// label, hint, whether it is a secret, and a prefill where the value is already
+// known. The endpoint reports whether a variable is set; it never returns the
+// value itself, and it never accepts one: these functions read process.env,
+// which is fixed at deploy time, so credentials are collected in the browser
+// and handed to whoever manages the hosting environment.
 
 import { requireSession } from './_auth.js';
+
+const SITE = 'https://www.nrg-energia.com/';
 
 const PLATFORMS = [
   {
     id: 'search-console',
     name: 'Google Search Console',
     metrics: 'Clicks, impressions, CTR, average position, top queries and pages',
-    env: ['GOOGLE_SERVICE_ACCOUNT_JSON', 'GSC_SITE_URL'],
+    fields: [
+      { key: 'GOOGLE_SERVICE_ACCOUNT_JSON', label: 'Chiave del service account', secret: true, multiline: true,
+        hint: 'Il contenuto completo del file JSON scaricato da Google Cloud, incollato qui per intero.' },
+      { key: 'GSC_SITE_URL', label: 'Proprietà in Search Console', prefill: SITE,
+        hint: 'Per una proprietà di dominio usa invece sc-domain:nrg-energia.com' },
+    ],
     steps: [
       'Enable the Search Console API in Google Cloud Console',
       'Create a service account and download its JSON key',
@@ -22,7 +36,10 @@ const PLATFORMS = [
     id: 'pagespeed',
     name: 'PageSpeed Insights',
     metrics: 'Lighthouse SEO, performance, accessibility and Core Web Vitals per page',
-    env: ['PAGESPEED_API_KEY'],
+    fields: [
+      { key: 'PAGESPEED_API_KEY', label: 'Chiave API', secret: true, placeholder: 'AIza…',
+        hint: 'Legge solo pagine pubbliche: non serve OAuth.' },
+    ],
     steps: [
       'In Google Cloud Console, enable the "PageSpeed Insights API"',
       'Create an API key — it only reads public pages, so no OAuth is needed',
@@ -34,7 +51,11 @@ const PLATFORMS = [
     id: 'youtube',
     name: 'YouTube',
     metrics: 'Views, watch time, subscribers, traffic sources',
-    env: ['YOUTUBE_API_KEY', 'YOUTUBE_CHANNEL_ID'],
+    fields: [
+      { key: 'YOUTUBE_API_KEY', label: 'Chiave API', secret: true, placeholder: 'AIza…' },
+      { key: 'YOUTUBE_CHANNEL_ID', label: 'ID del canale', placeholder: 'UC…',
+        hint: 'YouTube Studio → Impostazioni → Canale → Avanzate.' },
+    ],
     steps: [
       'Enable the YouTube Data API v3 in the same Google Cloud project',
       'Create an API key (public channel stats need no OAuth)',
@@ -46,7 +67,11 @@ const PLATFORMS = [
     id: 'linkedin',
     name: 'LinkedIn',
     metrics: 'Page followers, post impressions, engagement rate',
-    env: ['LINKEDIN_ACCESS_TOKEN', 'LINKEDIN_ORG_ID'],
+    fields: [
+      { key: 'LINKEDIN_ACCESS_TOKEN', label: 'Access token', secret: true },
+      { key: 'LINKEDIN_ORG_ID', label: 'ID dell’organizzazione', placeholder: '1234567',
+        hint: 'Il numero nell’indirizzo della pagina aziendale in modalità amministratore.' },
+    ],
     steps: [
       'Create an app on the LinkedIn Developer Platform, verified against the company page',
       'Request the Community Management API product (LinkedIn reviews this)',
@@ -59,7 +84,12 @@ const PLATFORMS = [
     id: 'facebook',
     name: 'Facebook',
     metrics: 'Page reach, impressions, engagement, referral traffic',
-    env: ['META_ACCESS_TOKEN', 'FACEBOOK_PAGE_ID'],
+    fields: [
+      { key: 'META_ACCESS_TOKEN', label: 'Token della Pagina', secret: true, shared: true,
+        hint: 'Token di lunga durata. Lo stesso valore vale anche per Instagram.' },
+      { key: 'FACEBOOK_PAGE_ID', label: 'ID della Pagina', placeholder: '1234567890',
+        hint: 'Pagina Facebook → Informazioni → ID pagina.' },
+    ],
     steps: [
       'Create a Meta app in the Meta for Developers console',
       'Link the Facebook Page to a Business account',
@@ -72,7 +102,12 @@ const PLATFORMS = [
     id: 'instagram',
     name: 'Instagram',
     metrics: 'Reach, profile views, follower growth, post insights',
-    env: ['META_ACCESS_TOKEN', 'INSTAGRAM_ACCOUNT_ID'],
+    fields: [
+      { key: 'META_ACCESS_TOKEN', label: 'Token della Pagina', secret: true, shared: true,
+        hint: 'Lo stesso token usato per Facebook: compilandone uno si compila l’altro.' },
+      { key: 'INSTAGRAM_ACCOUNT_ID', label: 'ID account Instagram Business', placeholder: '17841400000000000',
+        hint: 'Si legge dal Graph API Explorer sulla Pagina collegata.' },
+    ],
     steps: [
       'Convert the Instagram account to a Business or Creator account',
       'Connect it to the Facebook Page above',
@@ -85,8 +120,9 @@ const PLATFORMS = [
 
 export default requireSession(async function handler(req, res) {
   const platforms = PLATFORMS.map((p) => {
-    const missing = p.env.filter((k) => !process.env[k]);
-    return { ...p, connected: missing.length === 0, missing };
+    const fields = p.fields.map((f) => ({ ...f, set: Boolean(process.env[f.key]) }));
+    const missing = fields.filter((f) => !f.set).map((f) => f.key);
+    return { ...p, fields, env: fields.map((f) => f.key), connected: missing.length === 0, missing };
   });
   return res.status(200).json({
     platforms,

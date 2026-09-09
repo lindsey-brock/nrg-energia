@@ -213,6 +213,19 @@
     .lib-item img { width:100%; height:100%; object-fit:cover; display:block; }
     .lib-empty { grid-column:1/-1; text-align:center; color:var(--text-light); font-size:14px; padding:36px 0; }
 
+    /* Connessioni — a form per platform */
+    .conn-card { display:flex; flex-direction:column; }
+    .conn-form { margin-top:16px; border-top:1px solid var(--warm-gray); padding-top:6px; }
+    .field-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; }
+    .conn-form textarea.f { min-height:88px; font-family:ui-monospace,Menlo,monospace; font-size:12px; }
+    .conn-steps { margin-top:16px; }
+    .conn-steps summary { cursor:pointer; font-size:12.5px; color:var(--text-mid); }
+    .conn-steps summary:hover { color:var(--green-dark); }
+    .conn-out { margin-top:14px; }
+    .conn-pre { background:var(--green-dark); color:#dff0e5; border-radius:var(--radius-sm);
+                padding:12px 14px; font-family:ui-monospace,Menlo,monospace; font-size:12px;
+                overflow-x:auto; margin-top:8px; white-space:pre; }
+
     /* Andamento — map, live sessions, traffic sources */
     .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .demo-badge { font-size:10px; font-weight:700; letter-spacing:.8px; text-transform:uppercase;
@@ -1669,28 +1682,157 @@ VIEWS.marketing = async (root) => {
 };
 const stat = (k, v) => el('div', { class: 'stat' }, [el('div', { class: 'k', html: k }), el('div', { class: 'v', html: v })]);
 
+// ── connections ────────────────────────────────────────────────────────────
+// A real form per platform. The values are never sent to the server: these
+// functions read process.env, which is fixed at deploy time, so the panel
+// collects the credentials and produces the exact variables to set on the
+// host. Nothing is stored by the admin, and no secret is written to the repo.
+
+function copyButton(getText, label = 'Copia') {
+  const btn = el('button', { class: 'btn btn-ghost btn-sm' }, [label]);
+  btn.addEventListener('click', async () => {
+    const text = getText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // clipboard needs a secure context; fall back to a selection
+      const ta = el('textarea', { style: 'position:fixed;opacity:0' });
+      ta.value = text; document.body.append(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+    const was = btn.textContent;
+    btn.textContent = 'Copiato';
+    setTimeout(() => { btn.textContent = was; }, 1600);
+  });
+  return btn;
+}
+
+/** One platform card: status, what it measures, and the form to connect it. */
+function connectionCard(p, shared) {
+  const card = el('div', { class: 'card conn-card' });
+  const values = Object.create(null);
+
+  const status = el('span', { class: `status ${p.connected ? 'on' : 'off'}`,
+    html: p.connected ? 'Collegato' : 'Non collegato' });
+  const toggle = el('button', { class: 'btn btn-ghost btn-sm' },
+    [p.connected ? 'Aggiorna' : 'Collega']);
+  const form = el('div', { class: 'conn-form', hidden: '' });
+
+  card.append(
+    el('div', { class: 'card-head' }, [el('h3', { html: esc(p.name) }), status]),
+    el('p', { class: 'meta', style: 'margin-top:6px', html: esc(p.metrics) }),
+    el('p', { class: 'meta', style: 'margin-top:8px;font-style:italic', html: esc(p.effort) }),
+    el('div', { style: 'margin-top:12px' }, [toggle]),
+    form,
+  );
+
+  for (const f of p.fields) {
+    const initial = shared.values[f.key] ?? f.prefill ?? '';
+    values[f.key] = initial;
+
+    const input = el(f.multiline ? 'textarea' : 'input', {
+      class: 'f', type: f.secret && !f.multiline ? 'password' : 'text',
+      placeholder: f.placeholder || (f.set ? '•••••• (già impostata)' : ''),
+      spellcheck: 'false',
+    });
+    input.value = initial;
+    input.addEventListener('input', () => {
+      values[f.key] = input.value;
+      // Facebook and Instagram authenticate with the same Meta token
+      if (f.shared) shared.set(f.key, input.value, input);
+    });
+    // subscribers live on the per-render `shared` object, not on document, so
+    // they are dropped with the view instead of piling up on every navigation
+    if (f.shared) {
+      shared.subs.push((key, value, from) => {
+        if (key !== f.key || from === input) return;
+        input.value = value; values[f.key] = value;
+      });
+    }
+
+    const head = el('div', { class: 'field-head' }, [
+      el('label', { class: 'f', style: 'margin:0' }, [f.label]),
+      el('code', { class: 'env', html: f.key }),
+      f.set ? el('span', { class: 'status on', html: 'impostata' }) : null,
+    ]);
+    const wrap = el('div', { class: 'field', style: 'margin-top:12px' }, [head, input]);
+    if (f.secret && !f.multiline) {
+      const eye = el('button', { class: 'pick-btn', style: 'margin-top:6px' }, ['Mostra']);
+      eye.addEventListener('click', () => {
+        const shown = input.type === 'text';
+        input.type = shown ? 'password' : 'text';
+        eye.textContent = shown ? 'Mostra' : 'Nascondi';
+      });
+      wrap.append(eye);
+    }
+    if (f.hint) wrap.append(el('p', { class: 'meta', style: 'margin-top:6px', html: esc(f.hint) }));
+    form.append(wrap);
+  }
+
+  form.append(el('details', { class: 'conn-steps' }, [
+    el('summary', { html: 'Come ottenere questi valori' }),
+    el('ul', { class: 'setup-list', html: p.steps.map((x) => `<li>${esc(x)}</li>`).join('') }),
+  ]));
+
+  // the output: the exact variables to set on the host
+  const out = el('div', { class: 'conn-out', hidden: '' });
+  const envText = () => p.fields
+    .filter((f) => values[f.key])
+    .map((f) => `${f.key}=${values[f.key]}`).join('\n');
+
+  const gen = el('button', { class: 'btn btn-primary btn-sm' }, ['Genera variabili']);
+  gen.addEventListener('click', () => {
+    const text = envText();
+    out.innerHTML = '';
+    if (!text) {
+      out.append(el('div', { class: 'msg err show', html: 'Compila almeno un campo.' }));
+      out.hidden = false; return;
+    }
+    out.append(
+      el('p', { class: 'meta', html: 'Da impostare nell’ambiente del sito (Vercel → Settings → '
+        + 'Environment Variables). Diventano attive al deploy successivo.' }),
+      el('pre', { class: 'conn-pre', html: esc(text) }),
+      el('div', { style: 'display:flex;gap:8px;flex-wrap:wrap;margin-top:8px' }, [
+        copyButton(() => text, 'Copia le variabili'),
+        copyButton(() => p.fields.filter((f) => values[f.key])
+          .map((f) => `vercel env add ${f.key} production`).join('\n'), 'Copia i comandi vercel'),
+      ]),
+      el('p', { class: 'meta', style: 'margin-top:10px',
+        html: 'Questi valori non vengono salvati dal pannello né scritti nel repository.' }),
+    );
+    out.hidden = false;
+  });
+
+  form.append(el('div', { style: 'margin-top:16px' }, [gen]), out);
+
+  toggle.addEventListener('click', () => {
+    form.hidden = !form.hidden;
+    toggle.textContent = form.hidden ? (p.connected ? 'Aggiorna' : 'Collega') : 'Chiudi';
+  });
+  return card;
+}
+
 VIEWS.connections = async (root) => {
-  header(root, 'Connessioni', 'Ogni piattaforma è collegata solo quando le sue credenziali sono presenti nell’ambiente.');
+  header(root, 'Connessioni',
+    'Compila una piattaforma per ottenere le variabili da impostare sull’hosting.');
   const body = el('div'); root.append(body); loading(body);
   try {
     const { platforms, connectedCount } = await api('integrations');
     body.innerHTML = '';
     body.append(el('p', { class: 'meta', style: 'margin-bottom:16px',
       html: `${connectedCount} di ${platforms.length} collegate` }));
+
+    // META_ACCESS_TOKEN spans two cards: typing it once fills both
+    const shared = {
+      values: Object.create(null),
+      subs: [],
+      set(key, value, from) {
+        this.values[key] = value;
+        for (const fn of this.subs) fn(key, value, from);
+      },
+    };
     const grid = el('div', { class: 'conn-grid' });
-    for (const p of platforms) {
-      grid.append(el('div', { class: 'card' }, [
-        el('div', { style: 'display:flex;justify-content:space-between;align-items:center;gap:10px' }, [
-          el('h3', { html: esc(p.name) }),
-          el('span', { class: `status ${p.connected ? 'on' : 'off'}`, html: p.connected ? 'Collegato' : 'Non collegato' }),
-        ]),
-        el('p', { class: 'meta', style: 'margin-top:6px', html: esc(p.metrics) }),
-        el('p', { class: 'meta', style: 'margin-top:10px',
-          html: p.connected ? '' : `Variabili mancanti: ${p.missing.map((m) => `<code class="env">${m}</code>`).join(' ')}` }),
-        p.connected ? null : el('ul', { class: 'setup-list', html: p.steps.map((s) => `<li>${esc(s)}</li>`).join('') }),
-        el('p', { class: 'meta', style: 'margin-top:10px;font-style:italic', html: esc(p.effort) }),
-      ]));
-    }
+    for (const p of platforms) grid.append(connectionCard(p, shared));
     body.append(grid);
   } catch (err) { failed(body, err); }
 };
