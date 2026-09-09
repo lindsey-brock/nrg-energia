@@ -508,7 +508,15 @@ export function createCanvas({ lang, langData, post, onDirty, uploadImage }) {
         onclick: () => openLibrary((publicId) => { post.image = publicId; touch(); paint(); }),
       }, ['Scegli dalla libreria']),
     ]));
-    root.append(h('img', { class: 'hero-thumb', src: cloudinary(post.image, 900), alt: '' }));
+    root.append(post.image
+      ? h('img', { class: 'hero-thumb', src: cloudinary(post.image, 900), alt: '' })
+      : h('div', { class: 'hero-thumb hero-empty' }, [
+          h('span', { class: 'hero-empty-icon', html:
+            '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-5-5-4.5 4.5L9 13l-6 6"/></svg>' }),
+          h('span', {}, [lang === 'it'
+            ? 'Trascina un’immagine qui, o scegline una dalla libreria'
+            : 'Drag an image here, or pick one from the library']),
+        ]));
 
     root.append(h('div', { class: 'canvas-label', style: 'margin-top:22px' }, ['Occhiello']));
     root.append(editable('p', langData.lead, (v) => { langData.lead = v; }, 'lead'));

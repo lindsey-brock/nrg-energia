@@ -83,6 +83,16 @@
       background:linear-gradient(135deg,#c9d6cd 0%,#9db3a6 60%,#7d94a8 100%); }
 
     /* formatting toolbar, pinned above the scrolling canvas */
+    .title-edit { outline:none; border-radius:6px; padding:2px 6px; margin-left:-6px;
+      transition:background .15s, box-shadow .15s; cursor:text; }
+    .title-edit:hover { background:rgba(0,0,0,.03); }
+    .title-edit:focus { background:var(--white); box-shadow:0 0 0 2px var(--green-pale); }
+    .title-edit:empty::before { content:attr(data-placeholder); color:var(--text-light); }
+    .hero-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+      background:var(--off-white); border:2px dashed var(--warm-gray); color:var(--text-light);
+      font-size:13.5px; text-align:center; padding:20px; }
+    .hero-empty-icon { color:var(--warm-gray); line-height:0; }
+    .canvas.drop-hero .hero-empty { border-color:var(--green-mid); color:var(--green-dark); }
     .fmt-rail { position:sticky; top:0; z-index:30; background:var(--off-white); padding:10px 0 8px; }
     .fmt-toolbar { display:flex; align-items:center; gap:3px; padding:7px 10px; flex-wrap:wrap;
       background:var(--white); border:1px solid var(--warm-gray); border-radius:var(--radius-sm);
@@ -582,12 +592,30 @@ function openPostEditor(post, { isNew = false } = {}) {
   const seoBar = el('div', { class: 'card seo-bar' });
 
   header(work,
-    esc(draft.it.title.replace(/&mdash;/g, '—')),
+    esc(draft[lang].title),
     'Scrivi direttamente sulla pagina. Trascina un’immagine per sostituirla.',
     el('div', { style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [
       langSwitch,
       el('button', { class: 'btn btn-ghost btn-sm', onclick: () => { if (confirmLeave()) render(); } }, ['← Tutti gli articoli']),
     ]));
+  // the heading is the post title: edit it where you read it
+  const titleEl = work.querySelector('.title');
+  const titleInputs = {};
+  titleEl.setAttribute('contenteditable', 'true');
+  titleEl.setAttribute('spellcheck', 'false');
+  titleEl.classList.add('title-edit');
+  titleEl.dataset.placeholder = 'Titolo dell’articolo';
+  titleEl.addEventListener('input', () => {
+    draft[lang].title = titleEl.textContent.trim();
+    if (titleInputs[lang]) titleInputs[lang].value = draft[lang].title;
+    dirty = true; saveBtn.disabled = false; queueSeo();
+  });
+  titleEl.addEventListener('paste', (e) => {
+    e.preventDefault();
+    document.execCommand('insertText', false, (e.clipboardData || window.clipboardData).getData('text/plain'));
+  });
+  titleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') e.preventDefault(); });
+
   work.append(msg, seoBar, canvasHost);
 
   // ── live SEO panel ────────────────────────────────────────────────────────
@@ -668,6 +696,7 @@ function openPostEditor(post, { isNew = false } = {}) {
       onclick: (e) => {
         lang = code;
         [...langSwitch.children].forEach((b) => b.classList.toggle('active', b === e.target));
+        titleEl.textContent = draft[lang].title;
         mountCanvas();
       },
     }, [label]));
@@ -678,7 +707,13 @@ function openPostEditor(post, { isNew = false } = {}) {
   const metaCols = el('div', { class: 'lang-cols', style: 'margin-top:14px' });
   for (const code of ['it', 'en']) {
     const col = el('div', { class: 'lang-col' }, [el('h4', { html: code === 'it' ? 'Italiano' : 'English' })]);
-    col.append(field('Titolo', draft[code].title, (v) => { draft[code].title = v; dirty = true; queueSeo(); }));
+    const titleField = field('Titolo', draft[code].title, (v) => {
+      draft[code].title = v;
+      if (code === lang) titleEl.textContent = v;
+      dirty = true; queueSeo();
+    });
+    titleInputs[code] = titleField.querySelector('input');
+    col.append(titleField);
     col.append(field('Slug (URL)', draft[code].slug, (v) => { draft[code].slug = v; dirty = true; queueSeo(); }));
     col.append(field('Estratto', draft[code].excerpt, (v) => { draft[code].excerpt = v; dirty = true; queueSeo(); }, 'textarea'));
     col.append(field('Meta description (SEO)', draft[code].metaDescription, (v) => { draft[code].metaDescription = v; dirty = true; queueSeo(); }, 'textarea'));

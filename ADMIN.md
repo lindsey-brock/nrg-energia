@@ -75,6 +75,13 @@ CSS and is edited in place. Blocks (paragraph, quote, rate cards, icon list,
 image) can be added, reordered by dragging the handle, or deleted. Titles, slugs
 and SEO fields stay as form fields below the canvas.
 
+The post title is edited directly as the page heading, and stays in step with
+the Titolo field in Metadati either way round. It follows the language switch,
+so the heading always shows the title for the language being edited.
+
+A post with no cover image yet shows a dashed drop zone rather than a broken
+image icon — drag a file onto it, or use "Scegli dalla libreria".
+
 Plain-text fields — title, excerpt, meta description, alt text — hold real
 characters, not HTML entities, so an editor sees `l'abitazione` rather than
 `l&rsquo;abitazione`. `scripts/render.mjs` escapes them on the way into the
